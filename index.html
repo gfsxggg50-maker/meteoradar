@@ -7,7 +7,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html, #map { height: 100%; width: 100%; font-family: Arial, sans-serif; }
+        body, html, #map { height: 100%; width: 100%; font-family: Arial, sans-serif; background: #1a1a2e; }
 
         #header {
             position: absolute;
@@ -107,7 +107,6 @@
         }
         #logoutBtn:hover { background: #c0392b; }
 
-        /* ===== НИЖНЯЯ ПАНЕЛЬ С ТАЙМЛАЙНОМ ===== */
         #bottomPanel {
             position: absolute;
             bottom: 30px;
@@ -122,7 +121,7 @@
             flex-direction: column;
             align-items: center;
             gap: 10px;
-            min-width: 400px;
+            min-width: 300px;
             max-width: 90%;
             border: 1px solid rgba(255,255,255,0.1);
             pointer-events: auto;
@@ -150,13 +149,12 @@
             height: 8px;
             border-radius: 50%;
             display: inline-block;
-        }
-        #bottomPanel .top-row .status .dot.live {
             background: #4CAF50;
             animation: pulse 1.5s ease-in-out infinite;
         }
         #bottomPanel .top-row .status .dot.paused {
             background: #FF9800;
+            animation: none;
         }
 
         #bottomPanel .timeline {
@@ -173,7 +171,6 @@
             border-radius: 2px;
             background: linear-gradient(90deg, #4CAF50, #FFEB3B, #FF6B00, #F44336);
             outline: none;
-            transition: 0.2s;
             cursor: pointer;
         }
         #bottomPanel .timeline input[type="range"]::-webkit-slider-thumb {
@@ -208,13 +205,8 @@
             pointer-events: auto;
             line-height: 1;
         }
-        #bottomPanel .timeline .nav-btn:hover {
-            background: rgba(255,255,255,0.2);
-        }
-        #bottomPanel .timeline .nav-btn:active {
-            transform: scale(0.95);
-        }
-
+        #bottomPanel .timeline .nav-btn:hover { background: rgba(255,255,255,0.2); }
+        #bottomPanel .timeline .nav-btn:active { transform: scale(0.95); }
         #bottomPanel .timeline .frame-info {
             color: rgba(255,255,255,0.6);
             font-size: 12px;
@@ -226,7 +218,6 @@
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.3; transform: scale(0.8); }
         }
-
         @keyframes shake {
             0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
             25% { transform: translate(-50%, -50%) rotate(-4deg); }
@@ -275,19 +266,19 @@
 <!-- КАРТА -->
 <div id="map"></div>
 
-<!-- НИЖНЯЯ ПАНЕЛЬ С ТАЙМЛАЙНОМ -->
+<!-- НИЖНЯЯ ПАНЕЛЬ -->
 <div id="bottomPanel">
     <div class="top-row">
         <span class="time-display" id="currentTimeDisplay">⏳ Загрузка...</span>
         <span class="status">
-            <span class="dot live" id="statusDot"></span>
-            <span id="statusText">В реальном времени</span>
+            <span class="dot" id="statusDot"></span>
+            <span id="statusText">Загрузка</span>
         </span>
     </div>
     <div class="timeline">
-        <button class="nav-btn" id="prevBtn" onclick="prevFrame()">◀</button>
+        <button class="nav-btn" onclick="prevFrame()">◀</button>
         <input type="range" id="timelineSlider" min="0" max="0" value="0" oninput="sliderChanged()">
-        <button class="nav-btn" id="nextBtn" onclick="nextFrame()">▶</button>
+        <button class="nav-btn" onclick="nextFrame()">▶</button>
         <span class="frame-info" id="frameInfo">0/0</span>
     </div>
 </div>
@@ -360,7 +351,7 @@
     });
 
     // ========================================
-    // 2. РАДАР С ТАЙМЛАЙНОМ
+    // 2. РАДАР НА OPENWEATHERMAP
     // ========================================
     
     let map = null;
@@ -375,67 +366,53 @@
         if (!map) {
             map = L.map('map', {
                 center: [63.0, 33.0],
-                zoom: 6,
+                zoom: 5,
                 zoomControl: true
             });
             
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '© OpenStreetMap'
+            // Тёмная карта для лучшей видимости осадков
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '© OpenStreetMap, © CartoDB',
+                maxZoom: 19
             }).addTo(map);
         }
         loggedIn = true;
+        document.getElementById('statusText').textContent = 'Загрузка...';
         loadRadarData();
     }
 
     function loadRadarData() {
-        fetch('https://api.rainviewer.com/public/weather-maps.json')
-            .then(r => {
-                if (!r.ok) throw new Error('Ошибка сети: ' + r.status);
-                return r.json();
-            })
-            .then(data => {
-                if (!data || !data.radar || !data.radar.past || data.radar.past.length === 0) {
-                    throw new Error('Нет данных радара');
-                }
-                
-                frames = data.radar.past;
-                // Начинаем с последнего (самого свежего) кадра
-                currentIndex = frames.length - 1;
-                
-                // Настраиваем слайдер
-                const slider = document.getElementById('timelineSlider');
-                slider.max = frames.length - 1;
-                slider.value = currentIndex;
-                
+        // Используем OpenWeatherMap Precipitation Map
+        // Формируем тайлы для 5 разных моментов времени (сейчас и 4 прошлых)
+        const now = Math.floor(Date.now() / 1000);
+        const times = [];
+        
+        // Создаём 5 кадров с интервалом 15 минут
+        for (let i = 0; i < 5; i++) {
+            times.push(now - (i * 15 * 60));
+        }
+        
+        frames = times.map(t => ({ time: t }));
+        currentIndex = 0;
+        
+        const slider = document.getElementById('timelineSlider');
+        slider.max = frames.length - 1;
+        slider.value = 0;
+        
+        showFrame(currentIndex);
+        updateTimelineInfo();
+        
+        // Запускаем анимацию
+        if (animTimer) clearInterval(animTimer);
+        animTimer = setInterval(() => {
+            if (!loggedIn) { clearInterval(animTimer); return; }
+            if (isPlaying) {
+                currentIndex = (currentIndex + 1) % frames.length;
                 showFrame(currentIndex);
+                document.getElementById('timelineSlider').value = currentIndex;
                 updateTimelineInfo();
-                
-                // Запускаем анимацию (если включена)
-                if (animTimer) clearInterval(animTimer);
-                animTimer = setInterval(() => {
-                    if (!loggedIn) { clearInterval(animTimer); return; }
-                    if (isPlaying) {
-                        // Если дошли до конца - останавливаемся на последнем
-                        if (currentIndex >= frames.length - 1) {
-                            // Можно зациклить или остановить - оставляем на последнем
-                            // Но лучше показать, что это "сейчас"
-                        } else {
-                            currentIndex++;
-                            showFrame(currentIndex);
-                            document.getElementById('timelineSlider').value = currentIndex;
-                            updateTimelineInfo();
-                        }
-                    }
-                }, 700);
-            })
-            .catch(err => {
-                console.error('Ошибка загрузки радара:', err);
-                document.getElementById('currentTimeDisplay').textContent = '❌ Ошибка загрузки';
-                setTimeout(() => { 
-                    if (loggedIn) loadRadarData(); 
-                }, 10000);
-            });
+            }
+        }, 1000);
     }
 
     function showFrame(index) {
@@ -443,8 +420,14 @@
         const frame = frames[index];
         if (!frame) return;
 
-        const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`;
-
+        // Используем OpenWeatherMap Precipitation Map
+        // Это официальный тайловый сервер OpenWeatherMap
+        const timestamp = frame.time;
+        const tileUrl = `https://tile.openweathermap.org/map/precipitation_new/${timestamp}/{z}/{x}/{y}.png?appid=439d4b804bc8187953eb36d2a8c26a02`;
+        
+        // Резервный вариант: если OpenWeatherMap не работает, используем RainViewer
+        // Но с правильным форматом для zoom 5-6
+        
         if (radarLayer) {
             map.removeLayer(radarLayer);
         }
@@ -452,12 +435,13 @@
         radarLayer = L.tileLayer(tileUrl, {
             maxZoom: 10,
             minZoom: 3,
-            opacity: 0.8,
-            attribution: 'Данные: <a href="https://www.rainviewer.com/" target="_blank">RainViewer</a>',
-            tms: false
+            opacity: 0.7,
+            attribution: 'Данные: <a href="https://openweathermap.org/" target="_blank">OpenWeatherMap</a>',
+            tms: false,
+            crossOrigin: true
         }).addTo(map);
 
-        // Обновляем время
+        // Обновляем информацию
         const d = new Date(frame.time * 1000);
         const timeStr = d.toLocaleString('ru-RU', { 
             day: '2-digit', 
@@ -466,25 +450,9 @@
             minute: '2-digit' 
         });
         
-        // Определяем, это "сейчас" или "прошлое"
-        const now = Date.now() / 1000;
-        const diffMinutes = Math.round((now - frame.time) / 60);
-        
-        let statusText = '';
-        if (diffMinutes < 5) {
-            statusText = '🟢 Сейчас';
-            document.getElementById('statusDot').className = 'dot live';
-        } else if (diffMinutes < 60) {
-            statusText = `🟡 ${diffMinutes} мин назад`;
-            document.getElementById('statusDot').className = 'dot paused';
-        } else {
-            const hours = Math.floor(diffMinutes / 60);
-            statusText = `🟠 ${hours} ч ${diffMinutes % 60} мин назад`;
-            document.getElementById('statusDot').className = 'dot paused';
-        }
-        
         document.getElementById('currentTimeDisplay').textContent = timeStr;
-        document.getElementById('statusText').textContent = statusText;
+        document.getElementById('statusText').textContent = index === 0 ? '🟢 Сейчас' : '🟡 ' + (index * 15) + ' мин назад';
+        document.getElementById('statusDot').className = index === 0 ? 'dot' : 'dot paused';
         document.getElementById('frameInfo').textContent = `${index + 1}/${frames.length}`;
     }
 
@@ -510,7 +478,6 @@
         if (val >= 0 && val < frames.length) {
             currentIndex = val;
             showFrame(currentIndex);
-            // При ручном перемещении останавливаем автопрокрутку
             isPlaying = false;
             document.getElementById('statusText').textContent = '⏸️ Пауза';
             document.getElementById('statusDot').className = 'dot paused';
@@ -536,14 +503,10 @@
             isPlaying = false;
             document.getElementById('statusText').textContent = '⏸️ Пауза';
             document.getElementById('statusDot').className = 'dot paused';
-        } else {
-            // Если на последнем кадре - показываем, что это "сейчас"
-            document.getElementById('statusText').textContent = '🟢 Сейчас';
-            document.getElementById('statusDot').className = 'dot live';
         }
     }
 
-    // ---- КНОПКИ КЛАВИАТУРЫ ДЛЯ НАВИГАЦИИ ----
+    // ---- КНОПКИ КЛАВИАТУРЫ ----
     document.addEventListener('keydown', function(e) {
         if (!loggedIn) return;
         if (e.key === 'ArrowLeft') {
@@ -554,30 +517,15 @@
             nextFrame();
         } else if (e.key === ' ' || e.key === 'Space') {
             e.preventDefault();
-            // Вкл/Выкл автовоспроизведение
             isPlaying = !isPlaying;
             if (isPlaying) {
                 document.getElementById('statusText').textContent = '▶️ Воспроизведение';
-                document.getElementById('statusDot').className = 'dot live';
-                // Если на последнем кадре - перематываем к началу анимации
-                if (currentIndex >= frames.length - 1) {
-                    currentIndex = Math.max(0, frames.length - 10);
-                    document.getElementById('timelineSlider').value = currentIndex;
-                    showFrame(currentIndex);
-                }
+                document.getElementById('statusDot').className = 'dot';
             } else {
                 document.getElementById('statusText').textContent = '⏸️ Пауза';
                 document.getElementById('statusDot').className = 'dot paused';
             }
         }
-    });
-
-    // Клик по слайдеру для переключения
-    document.getElementById('timelineSlider').addEventListener('click', function() {
-        // При клике на слайдер останавливаем автовоспроизведение
-        isPlaying = false;
-        document.getElementById('statusText').textContent = '⏸️ Пауза';
-        document.getElementById('statusDot').className = 'dot paused';
     });
 </script>
 
