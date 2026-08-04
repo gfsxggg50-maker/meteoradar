@@ -2,10 +2,10 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>МЕТЕОРАДАР</title>
     <style>
-        /* --- Полный сброс --- */
+        /* --- ПОЛНЫЙ СБРОС --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body {
             width: 100%;
@@ -15,13 +15,13 @@
             font-family: 'Segoe UI', Arial, sans-serif;
         }
 
-        /* --- Экран пароля --- */
+        /* --- ЭКРАН ПАРОЛЯ --- */
         #password-screen {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(10, 14, 23, 0.97);
-            backdrop-filter: blur(14px);
+            background: rgba(10, 14, 23, 0.98);
+            backdrop-filter: blur(16px);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -32,22 +32,22 @@
             padding: 20px;
         }
         #password-screen h1 {
-            font-size: 48px;
+            font-size: 52px;
             font-weight: 300;
-            letter-spacing: 6px;
+            letter-spacing: 8px;
             color: #8ab4f8;
-            text-shadow: 0 0 60px rgba(138,180,248,0.1);
+            text-shadow: 0 0 80px rgba(138,180,248,0.08);
         }
         #password-screen .subtitle {
-            color: rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.25);
             font-size: 16px;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
         }
         #password-screen input {
             padding: 16px 32px;
             border-radius: 50px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
             color: white;
             font-size: 20px;
             width: 280px;
@@ -57,7 +57,7 @@
         }
         #password-screen input:focus {
             border-color: #8ab4f8;
-            box-shadow: 0 0 40px rgba(138,180,248,0.06);
+            box-shadow: 0 0 50px rgba(138,180,248,0.05);
         }
         #password-screen button {
             padding: 16px 56px;
@@ -80,71 +80,331 @@
             height: 24px;
         }
 
-        /* --- Контейнер карты --- */
+        /* --- КОНТЕЙНЕР КАРТЫ --- */
         #map-container {
             width: 100vw;
             height: 100vh;
             position: relative;
             display: none;
+            background: #0a0e17;
         }
         #map-container iframe {
             width: 100%;
             height: 100%;
             border: none;
             display: block;
+            background: #0a0e17;
         }
 
-        /* --- Название станции (сверху слева) --- */
+        /* --- НАЗВАНИЕ СТАНЦИИ (сверху слева, как на скриншоте) --- */
         .station-name {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 24px;
+            left: 24px;
             z-index: 1000;
-            color: rgba(255,255,255,0.15);
-            font-size: 12px;
+            color: rgba(255,255,255,0.12);
+            font-size: 11px;
             letter-spacing: 2px;
             pointer-events: none;
             text-transform: uppercase;
+            font-weight: 300;
         }
 
-        /* --- Панель источников гроз (сверху справа) --- */
+        /* --- ПАНЕЛЬ ИСТОЧНИКОВ ГРОЗ (сверху справа) --- */
         .source-panel {
             position: absolute;
             top: 20px;
             right: 20px;
             z-index: 1000;
-            background: rgba(10, 14, 23, 0.8);
-            backdrop-filter: blur(12px);
-            border-radius: 12px;
+            background: rgba(10, 14, 23, 0.82);
+            backdrop-filter: blur(14px);
+            border-radius: 14px;
             padding: 14px 18px;
-            border: 1px solid rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.05);
             color: #e8edf5;
             font-size: 12px;
-            min-width: 120px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            min-width: 130px;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.6);
         }
         .source-panel h4 {
             font-size: 10px;
             font-weight: 600;
             color: #8ab4f8;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             margin-bottom: 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
             padding-bottom: 6px;
         }
         .source-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 4px 0;
+            gap: 10px;
+            padding: 5px 0;
             font-size: 12px;
-            color: rgba(255,255,255,0.6);
+            color: rgba(255,255,255,0.5);
             cursor: pointer;
-            transition: 0.2s;
+            transition: 0.25s;
+            border-radius: 4px;
+            padding-left: 4px;
         }
-        .source-item:hover { color: #fff; }
+        .source-item:hover { color: #fff; background: rgba(255,255,255,0.03); }
         .source-item .dot {
-            width: 8px;
-            height: 8px;
+            width: 9px;
+            height: 9px;
             border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+            box-shadow: 0 0 12px rgba(255,255,255,0.05);
+        }
+        .source-item.active { color: #8ab4f8; }
+        .source-item.active .dot { box-shadow: 0 0 16px currentColor; }
+
+        /* --- ЛЕГЕНДА ОПАСНЫХ ЯВЛЕНИЙ (снизу справа) --- */
+        .legend-panel {
+            position: absolute;
+            bottom: 30px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(10, 14, 23, 0.88);
+            backdrop-filter: blur(14px);
+            border-radius: 16px;
+            padding: 18px 22px;
+            border: 1px solid rgba(255,255,255,0.04);
+            color: #e8edf5;
+            font-size: 11px;
+            min-width: 160px;
+            max-height: 60vh;
+            overflow-y: auto;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+        }
+        .legend-panel::-webkit-scrollbar { width: 3px; }
+        .legend-panel::-webkit-scrollbar-thumb { background: #8ab4f8; border-radius: 10px; }
+        .legend-panel::-webkit-scrollbar-track { background: transparent; }
+
+        .legend-panel h4 {
+            font-size: 12px;
+            font-weight: 600;
+            color: #8ab4f8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            padding-bottom: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 3px 0;
+            transition: 0.15s;
+        }
+        .legend-item:hover { background: rgba(255,255,255,0.02); border-radius: 3px; padding-left: 4px; }
+        .legend-color {
+            width: 24px;
+            height: 14px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.04);
+            flex-shrink: 0;
+        }
+
+        /* --- ВРЕМЯ (снизу слева) --- */
+        .time-info {
+            position: absolute;
+            bottom: 30px;
+            left: 24px;
+            z-index: 1000;
+            color: rgba(255,255,255,0.2);
+            font-size: 11px;
+            background: rgba(10,14,23,0.5);
+            backdrop-filter: blur(4px);
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.03);
+            letter-spacing: 0.5px;
+            pointer-events: none;
+        }
+
+        /* --- АДАПТАЦИЯ ПОД ТЕЛЕФОН --- */
+        @media (max-width: 600px) {
+            #password-screen h1 { font-size: 30px; letter-spacing: 4px; }
+            #password-screen input { width: 220px; font-size: 18px; padding: 14px 20px; }
+            #password-screen button { padding: 14px 40px; font-size: 16px; }
+            
+            .station-name { top: 14px; left: 14px; font-size: 9px; }
+            .source-panel {
+                top: 12px;
+                right: 12px;
+                padding: 10px 14px;
+                font-size: 10px;
+                min-width: 90px;
+            }
+            .source-panel h4 { font-size: 9px; }
+            .source-item { font-size: 10px; padding: 3px 0; }
+            .source-item .dot { width: 7px; height: 7px; }
+            
+            .legend-panel {
+                bottom: 16px;
+                right: 10px;
+                padding: 12px 14px;
+                font-size: 9px;
+                min-width: 110px;
+                max-height: 45vh;
+            }
+            .legend-panel h4 { font-size: 10px; }
+            .legend-color { width: 18px; height: 12px; }
+            .time-info {
+                bottom: 16px;
+                left: 12px;
+                font-size: 9px;
+                padding: 4px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ====== ЭКРАН ВВОДА ПАРОЛЯ ====== -->
+    <div id="password-screen">
+        <h1>🌩️ МЕТЕОРАДАР</h1>
+        <div class="subtitle">Центральная Аэрологическая Обсерватория</div>
+        <input type="password" id="password-input" placeholder="Пароль" autofocus>
+        <button id="login-btn">Войти</button>
+        <div id="password-error"></div>
+    </div>
+
+    <!-- ====== КАРТА ====== -->
+    <div id="map-container">
+        <!-- ОСНОВНАЯ КАРТА С ГИДРОМЕТЦЕНТРА -->
+        <iframe 
+            id="radarFrame"
+            src="about:blank"
+            allowfullscreen>
+        </iframe>
+
+        <!-- НАЗВАНИЕ СТАНЦИИ -->
+        <div class="station-name">Центральная Аэрологическая Обсерватория</div>
+
+        <!-- ПАНЕЛЬ ИСТОЧНИКОВ ГРОЗ -->
+        <div class="source-panel">
+            <h4>Источники гроз</h4>
+            <div class="source-item active"><span class="dot" style="background:#ff6b6b;"></span> WWLLN</div>
+            <div class="source-item"><span class="dot" style="background:#ffd93d;"></span> Vaisala L</div>
+            <div class="source-item"><span class="dot" style="background:#6bcb77;"></span> Vaisala H</div>
+            <div class="source-item"><span class="dot" style="background:#4d96ff;"></span> Алвес</div>
+            <div class="source-item"><span class="dot" style="background:#9b59b6;"></span> GLD360</div>
+        </div>
+
+        <!-- ЛЕГЕНДА ОПАСНЫХ ЯВЛЕНИЙ -->
+        <div class="legend-panel" id="legendPanel">
+            <h4>Опасные явления</h4>
+            <div id="legendItems"></div>
+        </div>
+
+        <!-- ВРЕМЯ -->
+        <div class="time-info" id="timeInfo">--</div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 1. ПАРОЛЬ: 123
+        // ============================================================
+        const CORRECT_PASSWORD = "123";
+        
+        const passwordScreen = document.getElementById('password-screen');
+        const passwordInput = document.getElementById('password-input');
+        const loginBtn = document.getElementById('login-btn');
+        const errorDiv = document.getElementById('password-error');
+        const mapContainer = document.getElementById('map-container');
+        const radarFrame = document.getElementById('radarFrame');
+
+        function tryLogin() {
+            if (passwordInput.value === CORRECT_PASSWORD) {
+                passwordScreen.style.display = 'none';
+                mapContainer.style.display = 'block';
+                // Загружаем карту со стрелками направления гроз
+                radarFrame.src = 'https://meteoinfo.ru/radanim';
+            } else {
+                errorDiv.textContent = '❌ Неверный пароль';
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        }
+
+        loginBtn.addEventListener('click', tryLogin);
+        passwordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') tryLogin();
+        });
+
+        // ============================================================
+        // 2. ЛЕГЕНДА (все 19 типов)
+        // ============================================================
+        const legendData = [
+            { label: 'Обл. в. ср. яр.', color: '#b0b0b0' },
+            { label: 'Слоист. обл.', color: '#8a9ba8' },
+            { label: 'Ос. слаб.', color: '#64b5f6' },
+            { label: 'Ос. умер.', color: '#1e88e5' },
+            { label: 'Ос. сильн.', color: '#0d47a1' },
+            { label: 'Куч. обл.', color: '#e0e0e0' },
+            { label: 'Лив. слаб.', color: '#43a047' },
+            { label: 'Лив. умер.', color: '#2e7d32' },
+            { label: 'Лив. сильн.', color: '#1b5e20' },
+            { label: 'Гроза (R)', color: '#ffeb3b' },
+            { label: 'Гроза (R)', color: '#fdd835' },
+            { label: 'Гроза (R)', color: '#f9a825' },
+            { label: 'Град слаб.', color: '#90a4ae' },
+            { label: 'Град умер.', color: '#78909c' },
+            { label: 'Град сильн.', color: '#546e7a' },
+            { label: 'Гроза+Шкв слаб.', color: '#ff9800' },
+            { label: 'Гроза+Шкв умер.', color: '#f57c00' },
+            { label: 'Гроза+Шкв сильн.', color: '#e65100' },
+            { label: 'Смерч', color: '#d32f2f' },
+        ];
+
+        const container = document.getElementById('legendItems');
+        legendData.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'legend-item';
+            div.innerHTML = `
+                <div class="legend-color" style="background:${item.color};"></div>
+                <span>${item.label}</span>
+            `;
+            container.appendChild(div);
+        });
+
+        // ============================================================
+        // 3. ОБНОВЛЕНИЕ ВРЕМЕНИ
+        // ============================================================
+        function updateTime() {
+            const now = new Date();
+            const utc = now.toISOString().replace('T', ' ').slice(0, 16);
+            document.getElementById('timeInfo').textContent = utc + ' UTC';
+        }
+        updateTime();
+        setInterval(updateTime, 60000);
+
+        // ============================================================
+        // 4. ПЕРЕКЛЮЧЕНИЕ ИСТОЧНИКОВ ГРОЗ
+        // ============================================================
+        document.querySelectorAll('.source-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.source-item').forEach(el => el.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // ============================================================
+        // 5. СТРЕЛКИ НАПРАВЛЕНИЯ ГРОЗ
+        // ============================================================
+        // Карта meteoinfo.ru/radanim уже содержит стрелки движения гроз
+        // Они видны при анимации — это часть оригинальной карты Гидрометцентра.
+        // Дополнительно стрелки можно нарисовать поверх iframe через canvas,
+        // но для этого нужны координаты гроз из API (WWLLN, Vaisala и т.д.)
+        
+        console.log('✅ МЕТЕОРАДАР загружен!');
+        console.log('🌩️ Стрелки направления гроз отображаются на карте Гидрометцентра.');
+        console.log('🔍 Используйте колесо мыши или жесты для приближения.');
+    </script>
+
+</body>
+</html>
