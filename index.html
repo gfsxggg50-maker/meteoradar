@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Radar Karelia - Реальный радар</title>
+    <title>Radar Karelia</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -28,14 +28,7 @@
         #header h1 { font-size: 20px; font-weight: 700; }
         #header h1 span { color: #64b5f6; }
         #header .sub { font-size: 11px; opacity: 0.6; margin-left: 8px; }
-        #header .location { font-size: 13px; opacity: 0.8; display: flex; align-items: center; gap: 8px; }
-        #header .status {
-            font-size: 11px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            background: rgba(100, 181, 246, 0.2);
-            border: 1px solid rgba(100, 181, 246, 0.3);
-        }
+        #header .location { font-size: 13px; opacity: 0.8; }
 
         #login {
             position: absolute;
@@ -114,69 +107,124 @@
         }
         #logoutBtn:hover { background: #c0392b; }
 
-        #infoPanel {
+        /* ===== НИЖНЯЯ ПАНЕЛЬ С ТАЙМЛАЙНОМ ===== */
+        #bottomPanel {
             position: absolute;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 999;
-            background: rgba(0,0,0,0.85);
-            color: white;
-            padding: 12px 28px;
-            border-radius: 30px;
-            font-size: 14px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 14px 24px 18px 24px;
             display: none;
+            flex-direction: column;
             align-items: center;
-            gap: 18px;
-            backdrop-filter: blur(8px);
-            pointer-events: none;
-            white-space: nowrap;
+            gap: 10px;
+            min-width: 400px;
+            max-width: 90%;
             border: 1px solid rgba(255,255,255,0.1);
+            pointer-events: auto;
         }
-        #infoPanel .weather {
+        #bottomPanel .top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+        }
+        #bottomPanel .top-row .time-display {
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        #bottomPanel .top-row .status {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-weight: 600;
         }
-        .weather-icon { font-size: 24px; }
-        .weather-label {
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 0.5px;
-            font-weight: 700;
-        }
-        .weather-dot {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
+        #bottomPanel .top-row .status .dot {
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            border: 1px solid rgba(255,255,255,0.3);
+            display: inline-block;
         }
-        #infoPanel .sep { opacity: 0.3; }
-        #infoPanel .intensity-bar {
+        #bottomPanel .top-row .status .dot.live {
+            background: #4CAF50;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        #bottomPanel .top-row .status .dot.paused {
+            background: #FF9800;
+        }
+
+        #bottomPanel .timeline {
+            width: 100%;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 12px;
         }
-        #infoPanel .bar-bg {
-            width: 80px;
-            height: 6px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        #infoPanel .bar-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.3s;
+        #bottomPanel .timeline input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            border-radius: 2px;
             background: linear-gradient(90deg, #4CAF50, #FFEB3B, #FF6B00, #F44336);
-            width: 0%;
+            outline: none;
+            transition: 0.2s;
+            cursor: pointer;
         }
-        #infoPanel .intensity-value {
+        #bottomPanel .timeline input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            border: 2px solid #4a90e2;
+        }
+        #bottomPanel .timeline input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: 2px solid #4a90e2;
+        }
+
+        #bottomPanel .timeline .nav-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.2s;
+            pointer-events: auto;
+            line-height: 1;
+        }
+        #bottomPanel .timeline .nav-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        #bottomPanel .timeline .nav-btn:active {
+            transform: scale(0.95);
+        }
+
+        #bottomPanel .timeline .frame-info {
+            color: rgba(255,255,255,0.6);
             font-size: 12px;
-            opacity: 0.7;
-            min-width: 35px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(0.8); }
         }
 
         @keyframes shake {
@@ -184,18 +232,16 @@
             25% { transform: translate(-50%, -50%) rotate(-4deg); }
             75% { transform: translate(-50%, -50%) rotate(4deg); }
         }
-        @keyframes flash {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.3; transform: scale(1.3); }
-        }
 
         @media (max-width: 700px) {
             #header { flex-direction: column; padding: 10px 16px; gap: 4px; }
             #header h1 { font-size: 17px; }
             #login { min-width: auto; width: 90%; padding: 30px; }
-            #infoPanel { font-size: 11px; padding: 8px 16px; gap: 10px; flex-wrap: wrap; white-space: normal; }
-            #infoPanel .bar-bg { width: 50px; }
+            #bottomPanel { min-width: auto; width: 95%; padding: 12px 14px 16px 14px; }
+            #bottomPanel .top-row { font-size: 11px; flex-wrap: wrap; gap: 4px; }
+            #bottomPanel .top-row .time-display { font-size: 12px; }
             #logoutBtn { top: 110px; right: 10px; font-size: 11px; padding: 6px 14px; }
+            #bottomPanel .timeline .nav-btn { padding: 4px 10px; font-size: 14px; }
         }
     </style>
 </head>
@@ -207,22 +253,19 @@
         <h1>📡 Radar <span>Karelia</span></h1>
         <span class="sub">by Timur Konoplev</span>
     </div>
-    <div class="location">
-        <span>📍 Республика Карелия</span>
-        <span class="status" id="statusBadge">● Онлайн</span>
-    </div>
+    <div class="location">📍 Республика Карелия</div>
 </div>
 
 <!-- ФОРМА ВХОДА -->
 <div id="login">
     <h2>🌦️ Вход</h2>
-    <p class="subtitle">Реальный радар осадков</p>
+    <p class="subtitle">Радар осадков</p>
     <input type="text" id="loginInput" placeholder="Логин">
     <input type="password" id="passInput" placeholder="Пароль">
     <button onclick="doLogin()">🔓 Войти</button>
     <div class="error" id="errorMsg"></div>
     <div class="hint">
-        👤 <strong>radar</strong> &nbsp;|&nbsp; 🔑 <strong>free</strong>
+        👤 <strong>radar</strong> / <strong>123</strong> &nbsp;|&nbsp; 🔑 <strong>free</strong> / <strong>123</strong>
     </div>
 </div>
 
@@ -232,23 +275,21 @@
 <!-- КАРТА -->
 <div id="map"></div>
 
-<!-- ПАНЕЛЬ -->
-<div id="infoPanel">
-    <span id="timeDisplay">⏳ Загрузка...</span>
-    <span class="sep">|</span>
-    <span class="weather">
-        <span class="weather-icon" id="wIcon">🌧️</span>
-        <span class="weather-label" id="wLabel">Осадки</span>
-        <span class="weather-dot" id="wDot" style="background:#4a90e2;"></span>
-    </span>
-    <span class="sep">|</span>
-    <span class="intensity-bar">
-        <span style="font-size:12px;opacity:0.7;">💧</span>
-        <span class="bar-bg"><span class="bar-fill" id="intensityBar"></span></span>
-        <span class="intensity-value" id="intensityValue">0%</span>
-    </span>
-    <span class="sep">|</span>
-    <span id="frameCounter">0/0</span>
+<!-- НИЖНЯЯ ПАНЕЛЬ С ТАЙМЛАЙНОМ -->
+<div id="bottomPanel">
+    <div class="top-row">
+        <span class="time-display" id="currentTimeDisplay">⏳ Загрузка...</span>
+        <span class="status">
+            <span class="dot live" id="statusDot"></span>
+            <span id="statusText">В реальном времени</span>
+        </span>
+    </div>
+    <div class="timeline">
+        <button class="nav-btn" id="prevBtn" onclick="prevFrame()">◀</button>
+        <input type="range" id="timelineSlider" min="0" max="0" value="0" oninput="sliderChanged()">
+        <button class="nav-btn" id="nextBtn" onclick="nextFrame()">▶</button>
+        <span class="frame-info" id="frameInfo">0/0</span>
+    </div>
 </div>
 
 <script>
@@ -256,8 +297,10 @@
     // 1. АВТОРИЗАЦИЯ
     // ========================================
     
-    const LOGIN = 'radar';
-    const PASSWORD = 'free';
+    const USERS = [
+        { login: 'radar', password: 'free' },
+        { login: '123', password: '123' }
+    ];
 
     function doLogin() {
         const user = document.getElementById('loginInput').value.trim();
@@ -267,12 +310,15 @@
         if (!user) { error.textContent = '⚠️ Введите логин'; return; }
         if (!pass) { error.textContent = '⚠️ Введите пароль'; return; }
 
-        if (user === LOGIN && pass === PASSWORD) {
+        const found = USERS.find(u => u.login === user && u.password === pass);
+
+        if (found) {
             error.textContent = '';
             document.getElementById('login').style.display = 'none';
             document.getElementById('logoutBtn').style.display = 'block';
-            document.getElementById('infoPanel').style.display = 'flex';
+            document.getElementById('bottomPanel').style.display = 'flex';
             localStorage.setItem('radar_auth', 'ok');
+            localStorage.setItem('radar_user', user);
             initRadar();
         } else {
             error.textContent = '❌ Неверный логин или пароль!';
@@ -294,9 +340,10 @@
         if (animTimer) { clearInterval(animTimer); animTimer = null; }
         if (radarLayer && map) { map.removeLayer(radarLayer); radarLayer = null; }
         localStorage.removeItem('radar_auth');
+        localStorage.removeItem('radar_user');
         document.getElementById('login').style.display = 'block';
         document.getElementById('logoutBtn').style.display = 'none';
-        document.getElementById('infoPanel').style.display = 'none';
+        document.getElementById('bottomPanel').style.display = 'none';
         document.getElementById('loginInput').value = '';
         document.getElementById('passInput').value = '';
         document.getElementById('errorMsg').textContent = '';
@@ -304,22 +351,25 @@
 
     window.addEventListener('load', function() {
         if (localStorage.getItem('radar_auth') === 'ok') {
-            document.getElementById('loginInput').value = LOGIN;
-            document.getElementById('passInput').value = PASSWORD;
+            const savedUser = localStorage.getItem('radar_user') || 'radar';
+            const savedPass = savedUser === 'radar' ? 'free' : '123';
+            document.getElementById('loginInput').value = savedUser;
+            document.getElementById('passInput').value = savedPass;
             doLogin();
         }
     });
 
     // ========================================
-    // 2. РАДАР С РЕАЛЬНЫМИ ОСАДКАМИ
+    // 2. РАДАР С ТАЙМЛАЙНОМ
     // ========================================
     
     let map = null;
     let radarLayer = null;
     let animTimer = null;
     let frames = [];
-    let frameIndex = 0;
+    let currentIndex = 0;
     let loggedIn = false;
+    let isPlaying = true;
 
     function initRadar() {
         if (!map) {
@@ -329,14 +379,12 @@
                 zoomControl: true
             });
             
-            // Базовый слой карты
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap'
             }).addTo(map);
         }
         loggedIn = true;
-        document.getElementById('statusBadge').textContent = '● Загрузка...';
         loadRadarData();
     }
 
@@ -352,132 +400,185 @@
                 }
                 
                 frames = data.radar.past;
-                frameIndex = frames.length - 1;
-                showRadarFrame(frameIndex);
+                // Начинаем с последнего (самого свежего) кадра
+                currentIndex = frames.length - 1;
                 
+                // Настраиваем слайдер
+                const slider = document.getElementById('timelineSlider');
+                slider.max = frames.length - 1;
+                slider.value = currentIndex;
+                
+                showFrame(currentIndex);
+                updateTimelineInfo();
+                
+                // Запускаем анимацию (если включена)
                 if (animTimer) clearInterval(animTimer);
                 animTimer = setInterval(() => {
                     if (!loggedIn) { clearInterval(animTimer); return; }
-                    frameIndex = (frameIndex + 1) % frames.length;
-                    showRadarFrame(frameIndex);
-                }, 800);
-
-                document.getElementById('statusBadge').textContent = '● Онлайн';
-                document.getElementById('statusBadge').style.color = '#4CAF50';
+                    if (isPlaying) {
+                        // Если дошли до конца - останавливаемся на последнем
+                        if (currentIndex >= frames.length - 1) {
+                            // Можно зациклить или остановить - оставляем на последнем
+                            // Но лучше показать, что это "сейчас"
+                        } else {
+                            currentIndex++;
+                            showFrame(currentIndex);
+                            document.getElementById('timelineSlider').value = currentIndex;
+                            updateTimelineInfo();
+                        }
+                    }
+                }, 700);
             })
             .catch(err => {
                 console.error('Ошибка загрузки радара:', err);
-                document.getElementById('timeDisplay').textContent = '❌ Ошибка';
-                document.getElementById('statusBadge').textContent = '● Ошибка';
-                document.getElementById('statusBadge').style.color = '#F44336';
+                document.getElementById('currentTimeDisplay').textContent = '❌ Ошибка загрузки';
                 setTimeout(() => { 
                     if (loggedIn) loadRadarData(); 
                 }, 10000);
             });
     }
 
-    function showRadarFrame(index) {
+    function showFrame(index) {
         if (!loggedIn || !frames.length) return;
         const frame = frames[index];
         if (!frame) return;
 
-        // ПРАВИЛЬНЫЙ URL для тайлов радара RainViewer
-        // Формат: https://tilecache.rainviewer.com/v2/radar/{time}/256/{z}/{x}/{y}/2/1_1.png
-        // Используем размер 256x256 пикселей
         const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`;
 
         if (radarLayer) {
             map.removeLayer(radarLayer);
         }
 
-        // Создаём слой с прозрачностью, чтобы видеть карту под ним
         radarLayer = L.tileLayer(tileUrl, {
             maxZoom: 10,
             minZoom: 3,
             opacity: 0.8,
             attribution: 'Данные: <a href="https://www.rainviewer.com/" target="_blank">RainViewer</a>',
-            tms: false,
-            // Важно: используем правильный формат
-            errorTileUrl: ''
+            tms: false
         }).addTo(map);
 
-        // Определяем интенсивность осадков по данным RainViewer
-        // Если есть информация об интенсивности - используем её
-        let intensity = 50; // значение по умолчанию
-        
-        if (frame.intensity !== undefined) {
-            intensity = frame.intensity;
-        } else {
-            // Если нет данных об интенсивности, определяем по времени
-            const hour = new Date().getHours();
-            const month = new Date().getMonth();
-            
-            // Сезонный фактор для Карелии
-            let seasonalFactor = 0.5;
-            if (month >= 5 && month <= 8) seasonalFactor = 0.8;
-            else if (month >= 10 || month <= 3) seasonalFactor = 0.3;
-            
-            // Дневной фактор
-            const dayFactor = 0.5 + 0.5 * Math.sin((hour - 6) / 12 * Math.PI);
-            
-            intensity = Math.floor(10 + 220 * seasonalFactor * dayFactor * (0.6 + 0.8 * Math.random()));
-            intensity = Math.max(0, Math.min(255, intensity));
-        }
-
-        // Обновляем информацию о погоде
-        updateWeatherInfo(intensity, frame.time);
-        
-        // Время кадра
+        // Обновляем время
         const d = new Date(frame.time * 1000);
-        document.getElementById('timeDisplay').textContent = 
-            d.toLocaleString('ru-RU', { 
-                day: '2-digit', 
-                month: '2-digit', 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-        document.getElementById('frameCounter').textContent = `${index + 1}/${frames.length}`;
+        const timeStr = d.toLocaleString('ru-RU', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        
+        // Определяем, это "сейчас" или "прошлое"
+        const now = Date.now() / 1000;
+        const diffMinutes = Math.round((now - frame.time) / 60);
+        
+        let statusText = '';
+        if (diffMinutes < 5) {
+            statusText = '🟢 Сейчас';
+            document.getElementById('statusDot').className = 'dot live';
+        } else if (diffMinutes < 60) {
+            statusText = `🟡 ${diffMinutes} мин назад`;
+            document.getElementById('statusDot').className = 'dot paused';
+        } else {
+            const hours = Math.floor(diffMinutes / 60);
+            statusText = `🟠 ${hours} ч ${diffMinutes % 60} мин назад`;
+            document.getElementById('statusDot').className = 'dot paused';
+        }
+        
+        document.getElementById('currentTimeDisplay').textContent = timeStr;
+        document.getElementById('statusText').textContent = statusText;
+        document.getElementById('frameInfo').textContent = `${index + 1}/${frames.length}`;
     }
 
-    function updateWeatherInfo(intensity, timestamp) {
-        const intensityPercent = Math.round((intensity / 255) * 100);
+    function updateTimelineInfo() {
+        const frame = frames[currentIndex];
+        if (!frame) return;
         
-        let weather;
-        if (intensity < 15) {
-            weather = { icon: '☀️', label: 'Ясно', color: '#4CAF50' };
-        } else if (intensity < 40) {
-            weather = { icon: '🌦️', label: 'Морось', color: '#8BC34A' };
-        } else if (intensity < 80) {
-            weather = { icon: '🌧️', label: 'Дождь', color: '#2196F3' };
-        } else if (intensity < 150) {
-            weather = { icon: '⛈️', label: 'Ливень', color: '#FF6B00' };
-        } else if (intensity < 200) {
-            weather = { icon: '⛈️', label: 'Сильный ливень', color: '#F44336' };
-        } else {
-            weather = { icon: '🌩️', label: 'Гроза', color: '#9C27B0' };
-        }
+        const d = new Date(frame.time * 1000);
+        const timeStr = d.toLocaleString('ru-RU', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        document.getElementById('currentTimeDisplay').textContent = timeStr;
+        document.getElementById('frameInfo').textContent = `${currentIndex + 1}/${frames.length}`;
+    }
 
-        document.getElementById('wIcon').textContent = weather.icon;
-        document.getElementById('wLabel').textContent = weather.label;
-        document.getElementById('wDot').style.background = weather.color;
-        
-        document.getElementById('intensityBar').style.width = intensityPercent + '%';
-        document.getElementById('intensityValue').textContent = intensityPercent + '%';
-
-        if (weather.label === 'Гроза' || weather.label === 'Сильный ливень') {
-            document.getElementById('wIcon').style.animation = 'flash 0.5s infinite';
-        } else {
-            document.getElementById('wIcon').style.animation = 'none';
-        }
-
-        if (intensityPercent > 50) {
-            document.getElementById('statusBadge').textContent = `● ${weather.label}`;
-            document.getElementById('statusBadge').style.color = weather.color;
-        } else {
-            document.getElementById('statusBadge').textContent = '● Онлайн';
-            document.getElementById('statusBadge').style.color = '#4CAF50';
+    // ---- УПРАВЛЕНИЕ ТАЙМЛАЙНОМ ----
+    function sliderChanged() {
+        const slider = document.getElementById('timelineSlider');
+        const val = parseInt(slider.value);
+        if (val >= 0 && val < frames.length) {
+            currentIndex = val;
+            showFrame(currentIndex);
+            // При ручном перемещении останавливаем автопрокрутку
+            isPlaying = false;
+            document.getElementById('statusText').textContent = '⏸️ Пауза';
+            document.getElementById('statusDot').className = 'dot paused';
         }
     }
+
+    function prevFrame() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            document.getElementById('timelineSlider').value = currentIndex;
+            showFrame(currentIndex);
+            isPlaying = false;
+            document.getElementById('statusText').textContent = '⏸️ Пауза';
+            document.getElementById('statusDot').className = 'dot paused';
+        }
+    }
+
+    function nextFrame() {
+        if (currentIndex < frames.length - 1) {
+            currentIndex++;
+            document.getElementById('timelineSlider').value = currentIndex;
+            showFrame(currentIndex);
+            isPlaying = false;
+            document.getElementById('statusText').textContent = '⏸️ Пауза';
+            document.getElementById('statusDot').className = 'dot paused';
+        } else {
+            // Если на последнем кадре - показываем, что это "сейчас"
+            document.getElementById('statusText').textContent = '🟢 Сейчас';
+            document.getElementById('statusDot').className = 'dot live';
+        }
+    }
+
+    // ---- КНОПКИ КЛАВИАТУРЫ ДЛЯ НАВИГАЦИИ ----
+    document.addEventListener('keydown', function(e) {
+        if (!loggedIn) return;
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            prevFrame();
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            nextFrame();
+        } else if (e.key === ' ' || e.key === 'Space') {
+            e.preventDefault();
+            // Вкл/Выкл автовоспроизведение
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                document.getElementById('statusText').textContent = '▶️ Воспроизведение';
+                document.getElementById('statusDot').className = 'dot live';
+                // Если на последнем кадре - перематываем к началу анимации
+                if (currentIndex >= frames.length - 1) {
+                    currentIndex = Math.max(0, frames.length - 10);
+                    document.getElementById('timelineSlider').value = currentIndex;
+                    showFrame(currentIndex);
+                }
+            } else {
+                document.getElementById('statusText').textContent = '⏸️ Пауза';
+                document.getElementById('statusDot').className = 'dot paused';
+            }
+        }
+    });
+
+    // Клик по слайдеру для переключения
+    document.getElementById('timelineSlider').addEventListener('click', function() {
+        // При клике на слайдер останавливаем автовоспроизведение
+        isPlaying = false;
+        document.getElementById('statusText').textContent = '⏸️ Пауза';
+        document.getElementById('statusDot').className = 'dot paused';
+    });
 </script>
 
 </body>
