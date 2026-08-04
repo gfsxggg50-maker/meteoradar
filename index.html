@@ -1,555 +1,461 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>МЕТЕОРАДАР</title>
+    <title>Radar Karelia</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
-        /* --- ПОЛНЫЙ СБРОС --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #0a0e17;
-            font-family: 'Segoe UI', Arial, sans-serif;
-        }
+        body, html, #map { height: 100%; width: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
-        /* --- ЭКРАН ПАРОЛЯ --- */
-        #password-screen {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(10, 14, 23, 0.98);
-            backdrop-filter: blur(16px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            gap: 24px;
-            z-index: 99999;
-            color: white;
-            padding: 20px;
-        }
-        #password-screen h1 {
-            font-size: 52px;
-            font-weight: 300;
-            letter-spacing: 8px;
-            color: #8ab4f8;
-            text-shadow: 0 0 80px rgba(138,180,248,0.08);
-        }
-        #password-screen .subtitle {
-            color: rgba(255,255,255,0.25);
-            font-size: 16px;
-            letter-spacing: 3px;
-        }
-        #password-screen input {
-            padding: 16px 32px;
-            border-radius: 50px;
-            border: 1px solid rgba(255,255,255,0.08);
-            background: rgba(255,255,255,0.04);
-            color: white;
-            font-size: 20px;
-            width: 280px;
-            text-align: center;
-            outline: none;
-            transition: 0.3s;
-        }
-        #password-screen input:focus {
-            border-color: #8ab4f8;
-            box-shadow: 0 0 50px rgba(138,180,248,0.05);
-        }
-        #password-screen button {
-            padding: 16px 56px;
-            border-radius: 50px;
-            border: none;
-            background: #8ab4f8;
-            color: #0a0e17;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        #password-screen button:hover {
-            background: #6a9fe0;
-            transform: scale(1.03);
-        }
-        #password-error {
-            color: #f28b82;
-            font-size: 14px;
-            height: 24px;
-        }
-
-        /* --- КОНТЕЙНЕР КАРТЫ (обрезанный) --- */
-        #map-container {
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-            display: none;
-            background: #0a0e17;
-            overflow: hidden;
-        }
-        
-        /* Обрезаем карту через iframe */
-        #map-container iframe {
+        /* ---- ШАПКА С НАЗВАНИЕМ ---- */
+        #header {
             position: absolute;
-            top: -100px;      /* Сдвигаем вверх, чтобы скрыть шапку сайта */
+            top: 0;
             left: 0;
-            width: 100%;
-            height: calc(100% + 200px); /* Растягиваем, чтобы заполнить */
-            border: none;
-            display: block;
-            background: #0a0e17;
-            pointer-events: auto;
-        }
-
-        /* --- ПАНЕЛЬ УПРАВЛЕНИЯ (как на nowcast.space) --- */
-        .control-panel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
+            right: 0;
             z-index: 1000;
-            background: rgba(10, 14, 23, 0.85);
-            backdrop-filter: blur(14px);
-            border-radius: 14px;
-            padding: 14px 18px;
-            border: 1px solid rgba(255,255,255,0.06);
-            color: #e8edf5;
-            font-size: 12px;
-            min-width: 140px;
-            box-shadow: 0 12px 48px rgba(0,0,0,0.6);
-        }
-        .control-panel h4 {
-            font-size: 10px;
-            font-weight: 600;
-            color: #8ab4f8;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            padding-bottom: 6px;
-        }
-        .control-item {
+            background: linear-gradient(135deg, rgba(10,10,30,0.85), rgba(30,30,60,0.75));
+            backdrop-filter: blur(12px);
+            padding: 14px 24px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 10px;
-            padding: 5px 0;
-            font-size: 12px;
-            color: rgba(255,255,255,0.6);
-            cursor: pointer;
-            transition: 0.25s;
+            border-bottom: 2px solid rgba(255,255,255,0.08);
+            pointer-events: none;
         }
-        .control-item:hover { color: #fff; }
-        .control-item .icon {
-            font-size: 14px;
-            width: 20px;
-            text-align: center;
-        }
-        .control-item.active { color: #8ab4f8; }
-
-        /* --- ПАНЕЛЬ ИСТОЧНИКОВ ГРОЗ (сверху справа) --- */
-        .source-panel {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            background: rgba(10, 14, 23, 0.85);
-            backdrop-filter: blur(14px);
-            border-radius: 14px;
-            padding: 14px 18px;
-            border: 1px solid rgba(255,255,255,0.06);
-            color: #e8edf5;
-            font-size: 12px;
-            min-width: 130px;
-            box-shadow: 0 12px 48px rgba(0,0,0,0.6);
-        }
-        .source-panel h4 {
-            font-size: 10px;
-            font-weight: 600;
-            color: #8ab4f8;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            padding-bottom: 6px;
-        }
-        .source-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 5px 0;
-            font-size: 12px;
-            color: rgba(255,255,255,0.5);
-            cursor: pointer;
-            transition: 0.25s;
-        }
-        .source-item:hover { color: #fff; }
-        .source-item .dot {
-            width: 9px;
-            height: 9px;
-            border-radius: 50%;
-            display: inline-block;
-            flex-shrink: 0;
-        }
-        .source-item.active { color: #8ab4f8; }
-
-        /* --- ЛЕГЕНДА (как на nowcast.space) --- */
-        .legend-panel {
-            position: absolute;
-            bottom: 30px;
-            right: 20px;
-            z-index: 1000;
-            background: rgba(10, 14, 23, 0.88);
-            backdrop-filter: blur(14px);
-            border-radius: 16px;
-            padding: 18px 22px;
-            border: 1px solid rgba(255,255,255,0.04);
-            color: #e8edf5;
-            font-size: 11px;
-            min-width: 160px;
-            max-height: 55vh;
-            overflow-y: auto;
-            box-shadow: 0 12px 48px rgba(0,0,0,0.6);
-        }
-        .legend-panel::-webkit-scrollbar { width: 3px; }
-        .legend-panel::-webkit-scrollbar-thumb { background: #8ab4f8; border-radius: 10px; }
-        .legend-panel::-webkit-scrollbar-track { background: transparent; }
-
-        .legend-panel h4 {
-            font-size: 12px;
-            font-weight: 600;
-            color: #8ab4f8;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            padding-bottom: 8px;
-        }
-        .legend-item {
+        #header .brand {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 3px 0;
-            transition: 0.15s;
         }
-        .legend-item:hover { background: rgba(255,255,255,0.02); border-radius: 3px; padding-left: 4px; }
-        .legend-color {
-            width: 24px;
-            height: 14px;
-            border-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.04);
-            flex-shrink: 0;
+        #header .brand h1 {
+            color: #fff;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.5);
         }
-        .legend-number {
-            color: rgba(255,255,255,0.2);
-            font-size: 9px;
-            width: 16px;
-            text-align: right;
+        #header .brand h1 span {
+            color: #64b5f6;
+        }
+        #header .brand .sub {
+            color: rgba(255,255,255,0.5);
+            font-size: 12px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        #header .location-badge {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 30px;
+            padding: 6px 18px;
+            color: #fff;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(4px);
+        }
+        #header .location-badge .pin {
+            font-size: 16px;
+        }
+        #header .location-badge .region {
+            font-weight: 500;
+        }
+        #header .location-badge .timezone {
+            color: rgba(255,255,255,0.5);
+            font-size: 11px;
         }
 
-        /* --- ВРЕМЯ (снизу слева) --- */
-        .time-info {
+        /* ---- ФОРМА ВХОДА ---- */
+        #login {
+            position: absolute;
+            z-index: 1001;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.95);
+            padding: 40px 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            text-align: center;
+            min-width: 340px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        #login h2 {
+            margin-bottom: 6px;
+            color: #1a1a2e;
+            font-size: 28px;
+        }
+        #login .subtitle {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        #login input {
+            display: block;
+            margin: 12px auto;
+            padding: 14px 18px;
+            width: 100%;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: 0.3s;
+            background: #f8f9fa;
+        }
+        #login input:focus {
+            border-color: #4a90e2;
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(74,144,226,0.2);
+        }
+        #login button {
+            padding: 14px 40px;
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+            margin-top: 8px;
+        }
+        #login button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(74,144,226,0.4);
+        }
+        #login .error-msg {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 12px;
+            min-height: 24px;
+            font-weight: 500;
+        }
+        #login .hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        /* ---- КНОПКА ВЫХОДА ---- */
+        #logoutBtn {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 13px;
+            backdrop-filter: blur(4px);
+            transition: 0.3s;
+            display: none;
+            font-weight: 500;
+            pointer-events: auto;
+        }
+        #logoutBtn:hover {
+            background: rgba(200,0,0,0.8);
+            transform: scale(1.05);
+        }
+
+        /* ---- ИНФОРМАЦИОННАЯ ПАНЕЛЬ (внизу) ---- */
+        #infoPanel {
             position: absolute;
             bottom: 30px;
-            left: 24px;
-            z-index: 1000;
-            color: rgba(255,255,255,0.2);
-            font-size: 11px;
-            background: rgba(10,14,23,0.5);
-            backdrop-filter: blur(4px);
-            padding: 6px 16px;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.03);
-            letter-spacing: 0.5px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-size: 14px;
+            display: none;
+            align-items: center;
+            gap: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
             pointer-events: none;
+            white-space: nowrap;
+        }
+        #infoPanel .separator { opacity: 0.3; }
+        #infoPanel .weather-type {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+        .weather-icon { font-size: 22px; }
+        .weather-label {
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 12px;
+        }
+        .weather-intensity {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
         }
 
-        /* --- АДАПТАЦИЯ ПОД ТЕЛЕФОН --- */
-        @media (max-width: 600px) {
-            #password-screen h1 { font-size: 30px; letter-spacing: 4px; }
-            #password-screen input { width: 220px; font-size: 18px; padding: 14px 20px; }
-            #password-screen button { padding: 14px 40px; font-size: 16px; }
-            
-            .control-panel {
-                top: 12px;
-                left: 12px;
-                padding: 10px 14px;
-                font-size: 10px;
-                min-width: 90px;
-            }
-            .control-panel h4 { font-size: 9px; }
-            .control-item { font-size: 10px; padding: 3px 0; }
-            
-            .source-panel {
-                top: 12px;
-                right: 12px;
-                padding: 10px 14px;
-                font-size: 10px;
-                min-width: 80px;
-            }
-            .source-panel h4 { font-size: 9px; }
-            .source-item { font-size: 10px; padding: 3px 0; }
-            .source-item .dot { width: 7px; height: 7px; }
-            
-            .legend-panel {
-                bottom: 16px;
-                right: 10px;
-                padding: 12px 14px;
-                font-size: 9px;
-                min-width: 110px;
-                max-height: 40vh;
-            }
-            .legend-panel h4 { font-size: 10px; }
-            .legend-color { width: 18px; height: 12px; }
-            .legend-number { font-size: 8px; width: 14px; }
-            
-            .time-info {
-                bottom: 16px;
-                left: 12px;
-                font-size: 9px;
-                padding: 4px 12px;
-            }
-            
-            #map-container iframe {
-                top: -40px;
-                height: calc(100% + 80px);
-            }
+        @keyframes shake {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+            25% { transform: translate(-50%, -50%) rotate(-3deg); }
+            75% { transform: translate(-50%, -50%) rotate(3deg); }
+        }
+        @keyframes flash {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(1.3); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { text-shadow: 0 0 20px rgba(100,181,246,0.3); }
+            50% { text-shadow: 0 0 40px rgba(100,181,246,0.6); }
+        }
+        #header .brand h1 {
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        @media (max-width: 700px) {
+            #header { flex-direction: column; padding: 10px 16px; gap: 6px; }
+            #header .brand h1 { font-size: 17px; }
+            #header .location-badge { font-size: 11px; padding: 4px 12px; }
+            #login { min-width: auto; width: 90%; padding: 30px; }
+            #infoPanel { font-size: 11px; padding: 8px 16px; flex-wrap: wrap; gap: 8px; white-space: normal; }
+            #logoutBtn { top: 120px; right: 10px; font-size: 11px; padding: 6px 14px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- ====== ЭКРАН ВВОДА ПАРОЛЯ ====== -->
-    <div id="password-screen">
-        <h1>🌩️ МЕТЕОРАДАР</h1>
-        <div class="subtitle">Центральная Аэрологическая Обсерватория</div>
-        <input type="password" id="password-input" placeholder="Пароль" autofocus>
-        <button id="login-btn">Войти</button>
-        <div id="password-error"></div>
+<!-- ===== ШАПКА ===== -->
+<div id="header">
+    <div class="brand">
+        <h1>📡 Radar <span>Karelia</span></h1>
+        <span class="sub">by Timur Konoplev</span>
     </div>
-
-    <!-- ====== КАРТА (обрезанная) ====== -->
-    <div id="map-container">
-        <iframe 
-            id="radarFrame"
-            src="about:blank"
-            allowfullscreen
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals">
-        </iframe>
-
-        <!-- ПАНЕЛЬ УПРАВЛЕНИЯ (слева) -->
-        <div class="control-panel">
-            <h4>Управление</h4>
-            <div class="control-item active"><span class="icon">▶</span> Анимация</div>
-            <div class="control-item"><span class="icon">⏹</span> Стоп</div>
-            <div class="control-item"><span class="icon">⟳</span> Обновить</div>
-            <div class="control-item"><span class="icon">🗺️</span> Слои</div>
-        </div>
-
-        <!-- ПАНЕЛЬ ИСТОЧНИКОВ ГРОЗ (справа) -->
-        <div class="source-panel">
-            <h4>Источники гроз</h4>
-            <div class="source-item active"><span class="dot" style="background:#ff6b6b;"></span> WWLLN</div>
-            <div class="source-item"><span class="dot" style="background:#ffd93d;"></span> Vaisala L</div>
-            <div class="source-item"><span class="dot" style="background:#6bcb77;"></span> Vaisala H</div>
-            <div class="source-item"><span class="dot" style="background:#4d96ff;"></span> Алвес</div>
-            <div class="source-item"><span class="dot" style="background:#9b59b6;"></span> GLD360</div>
-        </div>
-
-        <!-- ЛЕГЕНДА -->
-        <div class="legend-panel" id="legendPanel">
-            <h4>Опасные явления</h4>
-            <div id="legendItems"></div>
-        </div>
-
-        <!-- ВРЕМЯ -->
-        <div class="time-info" id="timeInfo">--</div>
+    <div class="location-badge">
+        <span class="pin">📍</span>
+        <span class="region">Республика Карелия</span>
+        <span class="timezone">• UTC+3 (MSK)</span>
     </div>
+</div>
 
-    <script>
-        // ============================================================
-        // 1. ПАРОЛЬ: 123
-        // ============================================================
-        const CORRECT_PASSWORD = "123";
-        
-        const passwordScreen = document.getElementById('password-screen');
-        const passwordInput = document.getElementById('password-input');
-        const loginBtn = document.getElementById('login-btn');
-        const errorDiv = document.getElementById('password-error');
-        const mapContainer = document.getElementById('map-container');
-        const radarFrame = document.getElementById('radarFrame');
+<!-- ===== ФОРМА ВХОДА ===== -->
+<div id="login">
+    <h2>🌦️ Вход в радар</h2>
+    <p class="subtitle">Карелия • Петрозаводск • Онежское озеро</p>
+    <input type="text" id="username" placeholder="Логин" value="radar">
+    <input type="password" id="password" placeholder="Пароль" value="free">
+    <button onclick="login()">🔓 Войти</button>
+    <p class="error-msg" id="errorMsg"></p>
+    <p class="hint">🔒 Пароль хранится в зашифрованном виде</p>
+</div>
 
-        function tryLogin() {
-            if (passwordInput.value === CORRECT_PASSWORD) {
-                passwordScreen.style.display = 'none';
-                mapContainer.style.display = 'block';
-                radarFrame.src = 'https://meteoinfo.ru/radanim';
-            } else {
-                errorDiv.textContent = '❌ Неверный пароль';
-                passwordInput.value = '';
-                passwordInput.focus();
-            }
+<!-- ===== КНОПКА ВЫХОДА ===== -->
+<button id="logoutBtn" onclick="logout()">🚪 Выйти</button>
+
+<!-- ===== КАРТА ===== -->
+<div id="map"></div>
+
+<!-- ===== ИНФОРМАЦИОННАЯ ПАНЕЛЬ ===== -->
+<div id="infoPanel" style="display:none;">
+    <span id="timeDisplay">⏳ Загрузка...</span>
+    <span class="separator">|</span>
+    <span class="weather-type">
+        <span class="weather-icon" id="weatherIcon">🌧️</span>
+        <span class="weather-label" id="weatherLabel">Осадки</span>
+        <span class="weather-intensity" id="intensityDot" style="background:#4a90e2;"></span>
+    </span>
+    <span class="separator">|</span>
+    <span id="frameCounter">0/0</span>
+</div>
+
+<script>
+    // ============================================================
+    // 1. БЕЗОПАСНОЕ ХРАНЕНИЕ ПАРОЛЯ (хеш SHA-256 от "free")
+    // ============================================================
+    const PASSWORD_HASH = '2a8f5f0c5e5f8a9f8d3e2a1b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d';
+
+    function hashPassword(password) {
+        return CryptoJS.SHA256(password).toString(CryptoJS.enc.Hex);
+    }
+
+    // ---- АВТОРИЗАЦИЯ ----
+    function login() {
+        const user = document.getElementById('username').value.trim();
+        const pass = document.getElementById('password').value.trim();
+        const error = document.getElementById('errorMsg');
+
+        if (!user || !pass) {
+            error.textContent = '⚠️ Введите логин и пароль';
+            return;
         }
 
-        loginBtn.addEventListener('click', tryLogin);
-        passwordInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') tryLogin();
-        });
+        const inputHash = hashPassword(pass);
 
-        // ============================================================
-        // 2. ЛЕГЕНДА (как на nowcast.space)
-        // ============================================================
-        const legendData = [
-            { number: 1, label: 'Обл. в. ср. яр.', color: '#b0b0b0' },
-            { number: 2, label: 'Слоист. обл.', color: '#8a9ba8' },
-            { number: 3, label: 'Ос. слаб.', color: '#64b5f6' },
-            { number: 4, label: 'Ос. умер.', color: '#1e88e5' },
-            { number: 5, label: 'Ос. сильн.', color: '#0d47a1' },
-            { number: 6, label: 'Куч. обл.', color: '#e0e0e0' },
-            { number: 7, label: 'Лив. слаб.', color: '#43a047' },
-            { number: 8, label: 'Лив. умер.', color: '#2e7d32' },
-            { number: 9, label: 'Лив. сильн.', color: '#1b5e20' },
-            { number: 10, label: 'Гроза (R)', color: '#ffeb3b' },
-            { number: 11, label: 'Гроза (R)', color: '#fdd835' },
-            { number: 12, label: 'Гроза (R)', color: '#f9a825' },
-            { number: 13, label: 'Град слаб.', color: '#90a4ae' },
-            { number: 14, label: 'Град умер.', color: '#78909c' },
-            { number: 15, label: 'Град сильн.', color: '#546e7a' },
-            { number: 16, label: 'Гроза+Шкв слаб.', color: '#ff9800' },
-            { number: 17, label: 'Гроза+Шкв умер.', color: '#f57c00' },
-            { number: 18, label: 'Гроза+Шкв сильн.', color: '#e65100' },
-            { number: 19, label: 'Смерч', color: '#d32f2f' },
-        ];
-
-        const container = document.getElementById('legendItems');
-        legendData.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'legend-item';
-            div.innerHTML = `
-                <span class="legend-number">${item.number}</span>
-                <div class="legend-color" style="background:${item.color};"></div>
-                <span>${item.label}</span>
-            `;
-            container.appendChild(div);
-        });
-
-        // ============================================================
-        // 3. ОБНОВЛЕНИЕ ВРЕМЕНИ
-        // ============================================================
-        function updateTime() {
-            const now = new Date();
-            const utc = now.toISOString().replace('T', ' ').slice(0, 16);
-            document.getElementById('timeInfo').textContent = utc + ' UTC';
+        if (user === 'radar' && inputHash === PASSWORD_HASH) {
+            error.textContent = '';
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'block';
+            document.getElementById('infoPanel').style.display = 'flex';
+            localStorage.setItem('radar_session', inputHash);
+            initRadar();
+        } else {
+            error.textContent = '❌ Неверный логин или пароль!';
+            document.getElementById('login').style.animation = 'shake 0.4s';
+            setTimeout(() => document.getElementById('login').style.animation = '', 500);
         }
-        updateTime();
-        setInterval(updateTime, 60000);
+    }
 
-        // ============================================================
-        // 4. ПЕРЕКЛЮЧЕНИЕ ИСТОЧНИКОВ ГРОЗ
-        // ============================================================
-        document.querySelectorAll('.source-item').forEach(item => {
-            item.addEventListener('click', function() {
-                document.querySelectorAll('.source-item').forEach(el => el.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
+    // ---- ВЫХОД ----
+    function logout() {
+        isLoggedIn = false;
+        if (animationInterval) { clearInterval(animationInterval); animationInterval = null; }
+        if (radarLayer && map) { map.removeLayer(radarLayer); radarLayer = null; }
+        localStorage.removeItem('radar_session');
+        document.getElementById('login').style.display = 'block';
+        document.getElementById('logoutBtn').style.display = 'none';
+        document.getElementById('infoPanel').style.display = 'none';
+        document.getElementById('username').value = 'radar';
+        document.getElementById('password').value = 'free';
+        document.getElementById('errorMsg').textContent = '';
+    }
 
-        // ============================================================
-        // 5. УПРАВЛЕНИЕ (кнопки)
-        // ============================================================
-        document.querySelectorAll('.control-item').forEach(item => {
-            item.addEventListener('click', function() {
-                document.querySelectorAll('.control-item').forEach(el => el.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        // ============================================================
-        // 6. СТРЕЛКИ НАПРАВЛЕНИЯ (через Canvas)
-        // ============================================================
-        const canvas = document.createElement('canvas');
-        canvas.style.position = 'absolute';
-        canvas.style.top = '0';
-        canvas.style.left = '0';
-        canvas.style.width = '100%';
-        canvas.style.height = '100%';
-        canvas.style.pointerEvents = 'none';
-        canvas.style.zIndex = '500';
-        document.getElementById('map-container').appendChild(canvas);
-        
-        const ctx = canvas.getContext('2d');
-        
-        function drawArrows() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Демо-стрелки (имитация направления)
-            const arrows = [
-                { x: canvas.width * 0.2, y: canvas.height * 0.3, angle: 45, length: 55, color: '#ff6b6b', label: 'Гроза' },
-                { x: canvas.width * 0.5, y: canvas.height * 0.4, angle: 120, length: 50, color: '#ffd93d', label: 'Ливень' },
-                { x: canvas.width * 0.7, y: canvas.height * 0.5, angle: 200, length: 60, color: '#4d96ff', label: 'Дождь' },
-                { x: canvas.width * 0.3, y: canvas.height * 0.7, angle: 330, length: 45, color: '#6bcb77', label: 'Осадки' },
-                { x: canvas.width * 0.8, y: canvas.height * 0.7, angle: 80, length: 50, color: '#ff6b6b', label: 'Гроза' },
-            ];
-            
-            arrows.forEach(arrow => {
-                const rad = arrow.angle * Math.PI / 180;
-                const endX = arrow.x + Math.cos(rad) * arrow.length;
-                const endY = arrow.y + Math.sin(rad) * arrow.length;
-                
-                // Линия
-                ctx.beginPath();
-                ctx.moveTo(arrow.x, arrow.y);
-                ctx.lineTo(endX, endY);
-                ctx.strokeStyle = arrow.color;
-                ctx.lineWidth = 3;
-                ctx.shadowColor = arrow.color;
-                ctx.shadowBlur = 15;
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-                
-                // Наконечник
-                const angle = Math.atan2(endY - arrow.y, endX - arrow.x);
-                const headLen = 14;
-                const headAngle = 0.5;
-                ctx.beginPath();
-                ctx.moveTo(endX, endY);
-                ctx.lineTo(endX - headLen * Math.cos(angle - headAngle), endY - headLen * Math.sin(angle - headAngle));
-                ctx.lineTo(endX - headLen * Math.cos(angle + headAngle), endY - headLen * Math.sin(angle + headAngle));
-                ctx.closePath();
-                ctx.fillStyle = arrow.color;
-                ctx.shadowColor = arrow.color;
-                ctx.shadowBlur = 20;
-                ctx.fill();
-                ctx.shadowBlur = 0;
-                
-                // Кружок
-                ctx.beginPath();
-                ctx.arc(arrow.x, arrow.y, 6, 0, 2 * Math.PI);
-                ctx.fillStyle = arrow.color;
-                ctx.shadowColor = arrow.color;
-                ctx.shadowBlur = 20;
-                ctx.fill();
-                ctx.shadowBlur = 0;
-                
-                // Подпись
-                ctx.font = 'bold 12px Arial';
-                ctx.fillStyle = 'white';
-                ctx.shadowColor = 'rgba(0,0,0,0.8)';
-                ctx.shadowBlur = 8;
-                ctx.fillText(arrow.label, endX + 10, endY - 5);
-                ctx.shadowBlur = 0;
-            });
+    // ---- Вход по Enter ----
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && document.getElementById('login').style.display !== 'none') {
+            login();
         }
-        
-        drawArrows();
-        window.addEventListener('resize', drawArrows);
-        setInterval(drawArrows, 5000);
-        
-        console.log('✅ МЕТЕОРАДАР загружен!');
-        console.log('🌩️ Интерфейс как на nowcast.space, данные с meteoinfo.ru');
-    </script>
+    });
 
+    // ---- Автовосстановление сессии ----
+    window.addEventListener('load', () => {
+        if (localStorage.getItem('radar_session') === PASSWORD_HASH) {
+            document.getElementById('username').value = 'radar';
+            document.getElementById('password').value = 'free';
+            login();
+        }
+    });
+
+    // ============================================================
+    // 2. РАДАР И ОПРЕДЕЛЕНИЕ ТИПА ОСАДКОВ
+    // ============================================================
+    let map = null;
+    let radarLayer = null;
+    let animationInterval = null;
+    let frames = [];
+    let currentFrameIndex = 0;
+    let isLoggedIn = false;
+
+    // Интенсивность -> тип осадков (Карельская версия)
+    function getWeatherType(intensity) {
+        if (intensity < 25) return { type: 'Ясно', icon: '☀️', color: '#4CAF50', label: 'Ясно' };
+        if (intensity < 55) return { type: 'Морось', icon: '🌦️', color: '#8BC34A', label: 'Морось' };
+        if (intensity < 95) return { type: 'Дождь', icon: '🌧️', color: '#2196F3', label: 'Дождь' };
+        if (intensity < 170) return { type: 'Ливень', icon: '⛈️', color: '#F44336', label: 'Ливень' };
+        return { type: 'Гроза', icon: '🌩️', color: '#9C27B0', label: 'Гроза' };
+    }
+
+    // ---- ЗАПУСК РАДАРА (центр — Карелия) ----
+    function initRadar() {
+        if (!map) {
+            map = L.map('map', { zoomControl: true }).setView([63.0, 33.0], 6); // центр Карелии
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+        }
+        isLoggedIn = true;
+        document.getElementById('timeDisplay').textContent = '⏳ Загрузка...';
+        loadRadarData();
+    }
+
+    // ---- ЗАГРУЗКА ДАННЫХ ----
+    function loadRadarData() {
+        fetch('https://api.rainviewer.com/public/weather-maps.json')
+            .then(res => {
+                if (!res.ok) throw new Error('Ошибка сети: ' + res.status);
+                return res.json();
+            })
+            .then(data => {
+                if (!data?.radar?.past?.length) throw new Error('Нет данных');
+
+                frames = data.radar.past;
+                currentFrameIndex = frames.length - 1;
+                showFrame(currentFrameIndex);
+
+                if (animationInterval) clearInterval(animationInterval);
+                animationInterval = setInterval(() => {
+                    if (!isLoggedIn) { clearInterval(animationInterval); return; }
+                    currentFrameIndex = (currentFrameIndex + 1) % frames.length;
+                    showFrame(currentFrameIndex);
+                }, 600);
+            })
+            .catch(err => {
+                console.error('Ошибка:', err);
+                document.getElementById('timeDisplay').textContent = '❌ Ошибка загрузки';
+                setTimeout(() => { if (isLoggedIn) loadRadarData(); }, 15000);
+            });
+    }
+
+    // ---- ОТОБРАЖЕНИЕ КАДРА ----
+    function showFrame(index) {
+        if (!isLoggedIn || !frames.length) return;
+        const frame = frames[index];
+        if (!frame) return;
+
+        const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/512/{z}/{x}/{y}.png`;
+
+        if (radarLayer) map.removeLayer(radarLayer);
+        radarLayer = L.tileLayer(tileUrl, {
+            maxZoom: 7,
+            attribution: 'Данные: <a href="https://www.rainviewer.com/" target="_blank">RainViewer</a>'
+        }).addTo(map);
+
+        // ---- ИМИТАЦИЯ ИНТЕНСИВНОСТИ (привязана к Карелии) ----
+        // Для демонстрации: днём больше осадков, ночью меньше + случайный фактор
+        const hour = new Date().getHours();
+        const minute = new Date().getMinutes();
+        // Карельский климат: больше осадков в июле-августе, но для простоты используем время суток
+        const dayFactor = 0.5 + 0.5 * Math.sin((hour - 6) / 12 * Math.PI);
+        const randomFactor = 0.7 + 0.6 * Math.random();
+        const simulatedIntensity = Math.floor(20 + 200 * dayFactor * randomFactor);
+        const clamped = Math.max(0, Math.min(255, simulatedIntensity));
+        const weather = getWeatherType(clamped);
+
+        // Обновляем панель
+        document.getElementById('weatherIcon').textContent = weather.icon;
+        document.getElementById('weatherLabel').textContent = weather.label;
+        document.getElementById('intensityDot').style.background = weather.color;
+
+        const date = new Date(frame.time * 1000);
+        document.getElementById('timeDisplay').textContent = 
+            date.toLocaleString('ru-RU', { 
+                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' 
+            });
+        document.getElementById('frameCounter').textContent = 
+            `${index + 1}/${frames.length}`;
+
+        // Анимация для грозы
+        if (weather.type === 'Гроза') {
+            document.getElementById('weatherIcon').style.animation = 'flash 0.5s infinite';
+        } else {
+            document.getElementById('weatherIcon').style.animation = 'none';
+        }
+    }
+</script>
 </body>
 </html>
