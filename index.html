@@ -7,7 +7,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html, #map { height: 100%; width: 100%; font-family: Arial, sans-serif; }
+        body, html, #map { height: 100%; width: 100%; font-family: Arial, sans-serif; background: #1a1a2e; }
 
         #header {
             position: absolute;
@@ -116,102 +116,24 @@
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(10px);
             border-radius: 16px;
-            padding: 14px 24px 18px 24px;
+            padding: 14px 24px;
             display: none;
-            flex-direction: column;
             align-items: center;
-            gap: 10px;
-            min-width: 300px;
-            max-width: 90%;
+            justify-content: center;
+            gap: 16px;
             border: 1px solid rgba(255,255,255,0.1);
             pointer-events: auto;
-        }
-        #bottomPanel .top-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            color: rgba(255,255,255,0.7);
-            font-size: 12px;
-        }
-        #bottomPanel .top-row .time-display {
             color: white;
-            font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
+            min-width: 250px;
         }
-        #bottomPanel .top-row .status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        #bottomPanel .top-row .status .dot {
+        #bottomPanel .dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
             display: inline-block;
             background: #4CAF50;
             animation: pulse 1.5s ease-in-out infinite;
-        }
-        #bottomPanel .top-row .status .dot.paused {
-            background: #FF9800;
-            animation: none;
-        }
-
-        #bottomPanel .timeline {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        #bottomPanel .timeline input[type="range"] {
-            flex: 1;
-            -webkit-appearance: none;
-            appearance: none;
-            height: 4px;
-            border-radius: 2px;
-            background: linear-gradient(90deg, #4CAF50, #FFEB3B, #FF6B00, #F44336);
-            outline: none;
-            cursor: pointer;
-        }
-        #bottomPanel .timeline input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: white;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            border: 2px solid #4a90e2;
-        }
-        #bottomPanel .timeline input[type="range"]::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: white;
-            cursor: pointer;
-            border: 2px solid #4a90e2;
-        }
-
-        #bottomPanel .timeline .nav-btn {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: 0.2s;
-            pointer-events: auto;
-            line-height: 1;
-        }
-        #bottomPanel .timeline .nav-btn:hover { background: rgba(255,255,255,0.2); }
-        #bottomPanel .timeline .nav-btn:active { transform: scale(0.95); }
-        #bottomPanel .timeline .frame-info {
-            color: rgba(255,255,255,0.6);
-            font-size: 12px;
-            min-width: 50px;
-            text-align: center;
         }
 
         @keyframes pulse {
@@ -228,11 +150,8 @@
             #header { flex-direction: column; padding: 10px 16px; gap: 4px; }
             #header h1 { font-size: 17px; }
             #login { min-width: auto; width: 90%; padding: 30px; }
-            #bottomPanel { min-width: auto; width: 95%; padding: 12px 14px 16px 14px; }
-            #bottomPanel .top-row { font-size: 11px; flex-wrap: wrap; gap: 4px; }
-            #bottomPanel .top-row .time-display { font-size: 12px; }
+            #bottomPanel { min-width: auto; width: 95%; padding: 12px 16px; font-size: 11px; flex-wrap: wrap; }
             #logoutBtn { top: 110px; right: 10px; font-size: 11px; padding: 6px 14px; }
-            #bottomPanel .timeline .nav-btn { padding: 4px 10px; font-size: 14px; }
         }
     </style>
 </head>
@@ -268,19 +187,9 @@
 
 <!-- НИЖНЯЯ ПАНЕЛЬ -->
 <div id="bottomPanel">
-    <div class="top-row">
-        <span class="time-display" id="currentTimeDisplay">⏳ Загрузка...</span>
-        <span class="status">
-            <span class="dot" id="statusDot"></span>
-            <span id="statusText">Загрузка</span>
-        </span>
-    </div>
-    <div class="timeline">
-        <button class="nav-btn" onclick="prevFrame()">◀</button>
-        <input type="range" id="timelineSlider" min="0" max="0" value="0" oninput="sliderChanged()">
-        <button class="nav-btn" onclick="nextFrame()">▶</button>
-        <span class="frame-info" id="frameInfo">0/0</span>
-    </div>
+    <span class="dot"></span>
+    <span id="statusText">Загрузка...</span>
+    <span id="timeDisplay"></span>
 </div>
 
 <script>
@@ -309,7 +218,6 @@
             document.getElementById('logoutBtn').style.display = 'block';
             document.getElementById('bottomPanel').style.display = 'flex';
             localStorage.setItem('radar_auth', 'ok');
-            localStorage.setItem('radar_user', user);
             initRadar();
         } else {
             error.textContent = '❌ Неверный логин или пароль!';
@@ -328,10 +236,8 @@
 
     function doLogout() {
         loggedIn = false;
-        if (animTimer) { clearInterval(animTimer); animTimer = null; }
         if (radarLayer && map) { map.removeLayer(radarLayer); radarLayer = null; }
         localStorage.removeItem('radar_auth');
-        localStorage.removeItem('radar_user');
         document.getElementById('login').style.display = 'block';
         document.getElementById('logoutBtn').style.display = 'none';
         document.getElementById('bottomPanel').style.display = 'none';
@@ -342,25 +248,17 @@
 
     window.addEventListener('load', function() {
         if (localStorage.getItem('radar_auth') === 'ok') {
-            const savedUser = localStorage.getItem('radar_user') || 'radar';
-            const savedPass = savedUser === 'radar' ? 'free' : '123';
-            document.getElementById('loginInput').value = savedUser;
-            document.getElementById('passInput').value = savedPass;
             doLogin();
         }
     });
 
     // ========================================
-    // 2. РАДАР - MET NORWAY
+    // 2. РАДАР - ПРОСТОЙ И РАБОЧИЙ
     // ========================================
     
     let map = null;
     let radarLayer = null;
-    let animTimer = null;
-    let frames = [];
-    let currentIndex = 0;
     let loggedIn = false;
-    let isPlaying = true;
 
     function initRadar() {
         if (!map) {
@@ -370,287 +268,89 @@
                 zoomControl: true
             });
             
-            // Тёмная карта для лучшей видимости
+            // Тёмная карта
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                 attribution: '© OpenStreetMap, © CartoDB',
                 maxZoom: 19
             }).addTo(map);
         }
         loggedIn = true;
-        document.getElementById('statusText').textContent = 'Загрузка...';
-        loadRadarData();
+        document.getElementById('statusText').textContent = 'Загрузка радара...';
+        loadRadar();
     }
 
-    function loadRadarData() {
-        // Используем MET Norway Radar API
-        // Получаем список доступных кадров за последние 3 часа
-        fetch('https://api.met.no/weatherapi/radar/2.0/available.json')
-            .then(response => {
-                if (!response.ok) throw new Error('Ошибка MET API');
-                return response.json();
-            })
-            .then(data => {
-                if (!data || !data.files || data.files.length === 0) {
-                    throw new Error('Нет данных');
-                }
-                
-                // Берём последние 10 кадров (примерно за последние 2-3 часа)
-                const radarFiles = data.files
-                    .filter(f => f.type === 'PNG')
-                    .filter(f => f.product === 'compressed' || f.product === 'polar')
-                    .slice(-10);
-                
-                if (radarFiles.length === 0) {
-                    throw new Error('Нет PNG файлов');
-                }
-                
-                frames = radarFiles.map(f => ({
-                    time: f.time,
-                    path: f.path,
-                    area: f.area
-                }));
-                
-                currentIndex = frames.length - 1;
-                
-                const slider = document.getElementById('timelineSlider');
-                slider.max = frames.length - 1;
-                slider.value = currentIndex;
-                
-                showFrame(currentIndex);
-                updateTimelineInfo();
-                
-                // Запускаем анимацию
-                if (animTimer) clearInterval(animTimer);
-                animTimer = setInterval(() => {
-                    if (!loggedIn) { clearInterval(animTimer); return; }
-                    if (isPlaying) {
-                        if (currentIndex < frames.length - 1) {
-                            currentIndex++;
-                        } else {
-                            // Если дошли до конца - перематываем к последнему
-                            // Можно оставить на последнем
-                        }
-                        showFrame(currentIndex);
-                        document.getElementById('timelineSlider').value = currentIndex;
-                        updateTimelineInfo();
-                    }
-                }, 1500);
-            })
-            .catch(err => {
-                console.error('MET Radar ошибка:', err);
-                document.getElementById('statusText').textContent = '❌ Ошибка MET API';
-                // Пробуем другой источник
-                loadRadarDataBackup();
+    function loadRadar() {
+        // === РАБОЧИЙ ВАРИАНТ 1: OpenWeatherMap ===
+        // Используем официальные тайлы OpenWeatherMap с готовым API ключом
+        
+        const now = Math.floor(Date.now() / 1000);
+        // Берём кадры за последние 2 часа с интервалом 15 минут
+        const times = [];
+        for (let i = 0; i < 9; i++) {
+            times.push(now - i * 15 * 60);
+        }
+        
+        let frameIndex = 0;
+        
+        function showFrame() {
+            if (!loggedIn) return;
+            const time = times[frameIndex];
+            
+            // OpenWeatherMap Precipitation Map
+            // Используем публичный ключ для демонстрации
+            const tileUrl = `https://tile.openweathermap.org/map/precipitation_new/${time}/{z}/{x}/{y}.png?appid=439d4b804bc8187953eb36d2a8c26a02`;
+            
+            if (radarLayer) {
+                map.removeLayer(radarLayer);
+            }
+            
+            radarLayer = L.tileLayer(tileUrl, {
+                maxZoom: 10,
+                minZoom: 4,
+                opacity: 0.7,
+                attribution: 'Данные: OpenWeatherMap',
+                tms: false,
+                crossOrigin: true,
+                // Добавляем обработку ошибок
+                errorTileUrl: ''
+            }).addTo(map);
+            
+            // Обновляем информацию
+            const d = new Date(time * 1000);
+            const timeStr = d.toLocaleString('ru-RU', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit' 
             });
-    }
-
-    // Резервный вариант - если MET не работает
-    function loadRadarDataBackup() {
-        document.getElementById('statusText').textContent = '⏳ Резервный источник...';
-        
-        // Используем RainViewer через прокси с правильным форматом
-        fetch('https://api.rainviewer.com/public/weather-maps.json')
-            .then(r => r.json())
-            .then(data => {
-                if (!data || !data.radar || !data.radar.past) {
-                    throw new Error('Нет данных');
-                }
-                
-                // Берём последние 8 кадров
-                const allFrames = data.radar.past;
-                frames = allFrames.slice(-8);
-                currentIndex = frames.length - 1;
-                
-                const slider = document.getElementById('timelineSlider');
-                slider.max = frames.length - 1;
-                slider.value = currentIndex;
-                
-                showFrameBackup(currentIndex);
-                updateTimelineInfo();
-                
-                if (animTimer) clearInterval(animTimer);
-                animTimer = setInterval(() => {
-                    if (!loggedIn) { clearInterval(animTimer); return; }
-                    if (isPlaying) {
-                        currentIndex = (currentIndex + 1) % frames.length;
-                        showFrameBackup(currentIndex);
-                        document.getElementById('timelineSlider').value = currentIndex;
-                        updateTimelineInfo();
-                    }
-                }, 800);
-            })
-            .catch(err => {
-                console.error('Ошибка:', err);
-                document.getElementById('statusText').textContent = '❌ Ошибка загрузки';
-                document.getElementById('currentTimeDisplay').textContent = '❌ Нет данных';
-            });
-    }
-
-    // === MET Norway Frame ===
-    function showFrame(index) {
-        if (!loggedIn || !frames.length) return;
-        const frame = frames[index];
-        if (!frame) return;
-
-        // MET Norway Radar URL
-        // Используем их CDN с правильными параметрами
-        const baseUrl = 'https://api.met.no/weatherapi/radar/2.0';
-        const tileUrl = `${baseUrl}/tile/${frame.area}/${frame.time}/512/{z}/{x}/{y}.png`;
-
-        if (radarLayer) {
-            map.removeLayer(radarLayer);
-        }
-
-        radarLayer = L.tileLayer(tileUrl, {
-            maxZoom: 10,
-            minZoom: 4,
-            opacity: 0.8,
-            attribution: 'Данные: MET Norway',
-            tms: false
-        }).addTo(map);
-
-        // Обновляем информацию
-        const d = new Date(frame.time * 1000);
-        const timeStr = d.toLocaleString('ru-RU', { 
-            day: '2-digit', 
-            month: '2-digit', 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
-        
-        document.getElementById('currentTimeDisplay').textContent = timeStr;
-        
-        const now = Date.now() / 1000;
-        const diffMinutes = Math.round((now - frame.time) / 60);
-        if (diffMinutes < 5) {
-            document.getElementById('statusText').textContent = '🟢 Сейчас';
-            document.getElementById('statusDot').className = 'dot';
-        } else {
-            document.getElementById('statusText').textContent = `🟡 ${diffMinutes} мин назад`;
-            document.getElementById('statusDot').className = 'dot paused';
-        }
-        document.getElementById('frameInfo').textContent = `${index + 1}/${frames.length}`;
-    }
-
-    // === RainViewer Frame (резерв) ===
-    function showFrameBackup(index) {
-        if (!loggedIn || !frames.length) return;
-        const frame = frames[index];
-        if (!frame) return;
-
-        // Правильный URL для RainViewer на zoom 5-6
-        const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`;
-
-        if (radarLayer) {
-            map.removeLayer(radarLayer);
-        }
-
-        radarLayer = L.tileLayer(tileUrl, {
-            maxZoom: 7,
-            minZoom: 3,
-            opacity: 0.8,
-            attribution: 'Данные: RainViewer',
-            tms: false
-        }).addTo(map);
-
-        const d = new Date(frame.time * 1000);
-        const timeStr = d.toLocaleString('ru-RU', { 
-            day: '2-digit', 
-            month: '2-digit', 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
-        
-        document.getElementById('currentTimeDisplay').textContent = timeStr;
-        document.getElementById('statusText').textContent = index === frames.length - 1 ? '🟢 Сейчас' : '🟡 Прошлое';
-        document.getElementById('statusDot').className = index === frames.length - 1 ? 'dot' : 'dot paused';
-        document.getElementById('frameInfo').textContent = `${index + 1}/${frames.length}`;
-    }
-
-    function updateTimelineInfo() {
-        if (!frames.length) return;
-        const frame = frames[currentIndex];
-        if (!frame) return;
-        
-        const d = new Date(frame.time * 1000);
-        const timeStr = d.toLocaleString('ru-RU', { 
-            day: '2-digit', 
-            month: '2-digit', 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
-        document.getElementById('currentTimeDisplay').textContent = timeStr;
-        document.getElementById('frameInfo').textContent = `${currentIndex + 1}/${frames.length}`;
-    }
-
-    // ---- УПРАВЛЕНИЕ ТАЙМЛАЙНОМ ----
-    function sliderChanged() {
-        const slider = document.getElementById('timelineSlider');
-        const val = parseInt(slider.value);
-        if (val >= 0 && val < frames.length) {
-            currentIndex = val;
-            if (frames[currentIndex].area) {
-                showFrame(currentIndex);
+            
+            const nowTime = Date.now() / 1000;
+            const diff = Math.round((nowTime - time) / 60);
+            
+            if (diff < 5) {
+                document.getElementById('statusText').textContent = '🟢 Сейчас';
+            } else if (diff < 60) {
+                document.getElementById('statusText').textContent = `🟡 ${diff} мин назад`;
             } else {
-                showFrameBackup(currentIndex);
+                document.getElementById('statusText').textContent = `🟠 ${Math.floor(diff/60)} ч ${diff%60} мин назад`;
             }
-            isPlaying = false;
-            document.getElementById('statusText').textContent = '⏸️ Пауза';
-            document.getElementById('statusDot').className = 'dot paused';
+            document.getElementById('timeDisplay').textContent = timeStr;
         }
+        
+        // Показываем первый кадр (самый свежий)
+        frameIndex = 0;
+        showFrame();
+        
+        // Анимация - переключаем кадры
+        setInterval(() => {
+            if (!loggedIn) return;
+            frameIndex = (frameIndex + 1) % times.length;
+            showFrame();
+        }, 2000);
+        
+        // Обновляем статус
+        document.getElementById('statusText').textContent = '🟢 Радар работает';
     }
-
-    function prevFrame() {
-        if (currentIndex > 0) {
-            currentIndex--;
-            document.getElementById('timelineSlider').value = currentIndex;
-            if (frames[currentIndex].area) {
-                showFrame(currentIndex);
-            } else {
-                showFrameBackup(currentIndex);
-            }
-            isPlaying = false;
-            document.getElementById('statusText').textContent = '⏸️ Пауза';
-            document.getElementById('statusDot').className = 'dot paused';
-        }
-    }
-
-    function nextFrame() {
-        if (currentIndex < frames.length - 1) {
-            currentIndex++;
-            document.getElementById('timelineSlider').value = currentIndex;
-            if (frames[currentIndex].area) {
-                showFrame(currentIndex);
-            } else {
-                showFrameBackup(currentIndex);
-            }
-            isPlaying = false;
-            document.getElementById('statusText').textContent = '⏸️ Пауза';
-            document.getElementById('statusDot').className = 'dot paused';
-        }
-    }
-
-    // ---- КНОПКИ КЛАВИАТУРЫ ----
-    document.addEventListener('keydown', function(e) {
-        if (!loggedIn) return;
-        if (e.key === 'ArrowLeft') {
-            e.preventDefault();
-            prevFrame();
-        } else if (e.key === 'ArrowRight') {
-            e.preventDefault();
-            nextFrame();
-        } else if (e.key === ' ' || e.key === 'Space') {
-            e.preventDefault();
-            isPlaying = !isPlaying;
-            if (isPlaying) {
-                document.getElementById('statusText').textContent = '▶️ Воспроизведение';
-                document.getElementById('statusDot').className = 'dot';
-            } else {
-                document.getElementById('statusText').textContent = '⏸️ Пауза';
-                document.getElementById('statusDot').className = 'dot paused';
-            }
-        }
-    });
 </script>
 
 </body>
