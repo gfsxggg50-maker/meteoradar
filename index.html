@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радар и молнии Карелии</title>
+    <title>Радар Карелии</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -81,20 +81,30 @@
             flex-direction: column;
         }
         .header {
-            height: 56px;
+            height: 54px;
             background: #1e293b;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 12px;
+            padding: 0 14px;
             border-bottom: 1px solid #334155;
             z-index: 1000;
-            gap: 8px;
+            gap: 10px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
         .header h2 {
             font-size: 16px;
             font-weight: 600;
             color: #38bdf8;
+            white-space: nowrap;
+        }
+        .author {
+            font-size: 12px;
+            color: #64748b;
             white-space: nowrap;
         }
         .tabs {
@@ -105,7 +115,7 @@
             border-radius: 8px;
         }
         .tab-btn {
-            padding: 6px 14px;
+            padding: 6px 16px;
             border: none;
             border-radius: 6px;
             background: transparent;
@@ -155,7 +165,6 @@
             border-radius: 6px;
             font-size: 12px;
             cursor: pointer;
-            margin-left: 6px;
         }
         .logout-btn:hover {
             border-color: #f87171;
@@ -178,26 +187,17 @@
         #map {
             width: 100%;
             height: 100%;
+            background: #0b1120;
         }
         #lightning-iframe {
             width: 100%;
             height: 100%;
             border: none;
         }
-        .attribution {
-            position: absolute;
-            bottom: 8px;
-            left: 8px;
-            background: rgba(15, 23, 42, 0.85);
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            color: #94a3b8;
-            z-index: 1000;
-        }
-        .attribution a {
-            color: #38bdf8;
-            text-decoration: none;
+
+        /* Тёмная карта в стиле LightningMaps */
+        .leaflet-container {
+            background: #0b1120;
         }
     </style>
 </head>
@@ -218,7 +218,10 @@
 <!-- Основной экран -->
 <div id="main-screen">
     <div class="header">
-        <h2>Карелия</h2>
+        <div class="header-left">
+            <h2>Радар Карелии</h2>
+            <span class="author">Автор: Timur Konoplev</span>
+        </div>
 
         <div class="tabs">
             <button class="tab-btn active" id="tab-radar" onclick="switchTab('radar')">Осадки</button>
@@ -240,20 +243,14 @@
         <!-- Радар -->
         <div id="radar-panel" class="active">
             <div id="map"></div>
-            <div class="attribution">
-                Данные: <a href="https://www.rainviewer.com/" target="_blank">RainViewer</a>
-            </div>
         </div>
 
-        <!-- Молнии (Blitzortung) -->
+        <!-- Молнии -->
         <div id="lightning-panel">
             <iframe id="lightning-iframe"
-                src="https://map.blitzortung.org/index.php?interactive=1&NavigationControl=1&FullScreenControl=1&Cookies=0&InfoDiv=0&MenuButtonDiv=1&ScaleControl=1&Advertisment=0&MapStyle=0#7/61.78/34.35"
+                src="https://map.blitzortung.org/index.php?interactive=1&NavigationControl=0&FullScreenControl=0&Cookies=0&InfoDiv=0&MenuButtonDiv=0&ScaleControl=0&Advertisment=0&MapStyle=2&MapStyleRangeValue=8#7/61.78/34.35"
                 allowfullscreen>
             </iframe>
-            <div class="attribution" style="bottom: 40px;">
-                Молнии: <a href="https://www.blitzortung.org/" target="_blank">Blitzortung.org</a> / LightningMaps.org
-            </div>
         </div>
     </div>
 </div>
@@ -263,11 +260,11 @@
     const LOGIN = "admin";
     const PASSWORD = "karelia";
 
-    const KARELIA_CENTER = [61.78, 34.35]; // Петрозаводск
+    const KARELIA_CENTER = [61.78, 34.35];
     const KARELIA_ZOOM = 7;
 
     const TILE_SIZE = window.devicePixelRatio >= 2 ? 512 : 256;
-    const RADAR_OPACITY = 0.75;
+    const RADAR_OPACITY = 0.78;
     const ANIMATION_DELAY_MS = 600;
     const API_URL = "https://api.rainviewer.com/public/weather-maps.json";
 
@@ -341,11 +338,14 @@
     function initMap() {
         map = L.map('map', {
             maxZoom: 12,
-            minZoom: 5
+            minZoom: 5,
+            zoomControl: true
         }).setView(KARELIA_CENTER, KARELIA_ZOOM);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap'
+        // Тёмная подложка в стиле LightningMaps
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            subdomains: 'abcd'
         }).addTo(map);
 
         L.marker(KARELIA_CENTER)
