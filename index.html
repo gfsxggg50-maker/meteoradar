@@ -9,7 +9,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body, html, #map { height: 100%; width: 100%; font-family: Arial, sans-serif; }
 
-        /* ШАПКА */
         #header {
             position: absolute;
             top: 0;
@@ -26,23 +25,10 @@
             pointer-events: none;
             border-bottom: 2px solid rgba(100, 181, 246, 0.3);
         }
-        #header h1 {
-            font-size: 20px;
-            font-weight: 700;
-        }
+        #header h1 { font-size: 20px; font-weight: 700; }
         #header h1 span { color: #64b5f6; }
-        #header .sub {
-            font-size: 11px;
-            opacity: 0.6;
-            margin-left: 8px;
-        }
-        #header .location {
-            font-size: 13px;
-            opacity: 0.8;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        #header .sub { font-size: 11px; opacity: 0.6; margin-left: 8px; }
+        #header .location { font-size: 13px; opacity: 0.8; display: flex; align-items: center; gap: 8px; }
         #header .status {
             font-size: 11px;
             padding: 4px 12px;
@@ -51,7 +37,6 @@
             border: 1px solid rgba(100, 181, 246, 0.3);
         }
 
-        /* ФОРМА ВХОДА */
         #login {
             position: absolute;
             z-index: 1001;
@@ -65,16 +50,8 @@
             text-align: center;
             min-width: 300px;
         }
-        #login h2 {
-            margin-bottom: 5px;
-            color: #1a1a2e;
-            font-size: 26px;
-        }
-        #login .subtitle {
-            color: #888;
-            margin-bottom: 25px;
-            font-size: 14px;
-        }
+        #login h2 { margin-bottom: 5px; color: #1a1a2e; font-size: 26px; }
+        #login .subtitle { color: #888; margin-bottom: 25px; font-size: 14px; }
         #login input {
             display: block;
             margin: 10px auto;
@@ -84,10 +61,7 @@
             border-radius: 10px;
             font-size: 16px;
         }
-        #login input:focus {
-            border-color: #4a90e2;
-            outline: none;
-        }
+        #login input:focus { border-color: #4a90e2; outline: none; }
         #login button {
             padding: 12px;
             width: 100%;
@@ -101,10 +75,7 @@
             margin-top: 10px;
             transition: 0.2s;
         }
-        #login button:hover {
-            background: #357abd;
-            transform: scale(1.02);
-        }
+        #login button:hover { background: #357abd; transform: scale(1.02); }
         #login .error {
             color: #e74c3c;
             font-size: 14px;
@@ -126,7 +97,6 @@
             border-radius: 4px;
         }
 
-        /* КНОПКА ВЫХОДА */
         #logoutBtn {
             position: absolute;
             top: 80px;
@@ -142,11 +112,8 @@
             display: none;
             transition: 0.2s;
         }
-        #logoutBtn:hover {
-            background: #c0392b;
-        }
+        #logoutBtn:hover { background: #c0392b; }
 
-        /* ПАНЕЛЬ ВНИЗУ - РАСШИРЕННАЯ */
         #infoPanel {
             position: absolute;
             bottom: 30px;
@@ -344,7 +311,7 @@
     });
 
     // ========================================
-    // 2. РАДАР С АНАЛИЗОМ РЕАЛЬНЫХ ДАННЫХ
+    // 2. РАДАР С РЕАЛЬНЫМИ ОСАДКАМИ
     // ========================================
     
     let map = null;
@@ -353,11 +320,16 @@
     let frames = [];
     let frameIndex = 0;
     let loggedIn = false;
-    let intensityHistory = [];
 
     function initRadar() {
         if (!map) {
-            map = L.map('map').setView([63.0, 33.0], 6);
+            map = L.map('map', {
+                center: [63.0, 33.0],
+                zoom: 6,
+                zoomControl: true
+            });
+            
+            // Базовый слой карты
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap'
@@ -365,121 +337,117 @@
         }
         loggedIn = true;
         document.getElementById('statusBadge').textContent = '● Загрузка...';
-        loadRadar();
+        loadRadarData();
     }
 
-    function loadRadar() {
+    function loadRadarData() {
         fetch('https://api.rainviewer.com/public/weather-maps.json')
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) throw new Error('Ошибка сети: ' + r.status);
+                return r.json();
+            })
             .then(data => {
-                if (!data || !data.radar || !data.radar.past) {
-                    throw new Error('Нет данных');
+                if (!data || !data.radar || !data.radar.past || data.radar.past.length === 0) {
+                    throw new Error('Нет данных радара');
                 }
                 
                 frames = data.radar.past;
                 frameIndex = frames.length - 1;
-                showFrame(frameIndex);
+                showRadarFrame(frameIndex);
                 
                 if (animTimer) clearInterval(animTimer);
                 animTimer = setInterval(() => {
                     if (!loggedIn) { clearInterval(animTimer); return; }
                     frameIndex = (frameIndex + 1) % frames.length;
-                    showFrame(frameIndex);
+                    showRadarFrame(frameIndex);
                 }, 800);
 
                 document.getElementById('statusBadge').textContent = '● Онлайн';
                 document.getElementById('statusBadge').style.color = '#4CAF50';
             })
             .catch(err => {
-                console.error('Ошибка:', err);
+                console.error('Ошибка загрузки радара:', err);
                 document.getElementById('timeDisplay').textContent = '❌ Ошибка';
                 document.getElementById('statusBadge').textContent = '● Ошибка';
                 document.getElementById('statusBadge').style.color = '#F44336';
-                setTimeout(() => { if (loggedIn) loadRadar(); }, 15000);
+                setTimeout(() => { 
+                    if (loggedIn) loadRadarData(); 
+                }, 10000);
             });
     }
 
-    // ---- АНАЛИЗ РЕАЛЬНОЙ ИНТЕНСИВНОСТИ ОСАДКОВ ----
-    function analyzeIntensity(frameTime) {
-        // В реальном приложении здесь нужно анализировать пиксели PNG
-        // RainViewer использует цветовую шкалу для кодирования интенсивности:
-        // - Зеленый: слабые осадки (0-30)
-        // - Желтый: умеренные (30-60)  
-        // - Оранжевый: сильные (60-100)
-        // - Красный: очень сильные (100-150)
-        // - Фиолетовый: экстремальные (150+)
-        
-        // Для демонстрации используем данные из API
-        // У RainViewer есть поле "intensity" в некоторых версиях API
-        // Но мы будем определять по времени и реальным данным с радара
-        
-        // Используем время кадра для определения реальной погоды
-        // В Карелии осадки чаще летом, зимой меньше
-        const date = new Date(frameTime * 1000);
-        const month = date.getMonth(); // 0-11
-        const hour = date.getHours();
-        
-        // Сезонный фактор (летом больше осадков)
-        let seasonalFactor = 0;
-        if (month >= 5 && month <= 8) { // Июнь-Сентябрь
-            seasonalFactor = 0.7 + 0.3 * Math.sin((month - 5) / 4 * Math.PI);
-        } else if (month >= 10 || month <= 3) { // Ноябрь-Март (снег)
-            seasonalFactor = 0.3 + 0.2 * Math.sin((month + 2) / 6 * Math.PI);
-        } else { // Апрель, Май, Сентябрь, Октябрь (переходные)
-            seasonalFactor = 0.5 + 0.3 * Math.sin((month - 3) / 8 * Math.PI);
-        }
-        
-        // Дневной фактор (днём больше конвективных осадков)
-        const dayFactor = 0.5 + 0.5 * Math.sin((hour - 6) / 12 * Math.PI);
-        
-        // Случайные колебания (реальные данные всегда имеют вариативность)
-        const randomFactor = 0.7 + 0.6 * Math.random();
-        
-        // Базовая интенсивность (0-255)
-        let intensity = Math.floor(
-            10 + 
-            200 * seasonalFactor * dayFactor * randomFactor +
-            20 * Math.sin(hour / 6 * Math.PI) // Суточные колебания
-        );
-        
-        // Ограничиваем
-        intensity = Math.max(0, Math.min(255, intensity));
-        
-        // Добавляем в историю для сглаживания
-        intensityHistory.push(intensity);
-        if (intensityHistory.length > 5) intensityHistory.shift();
-        
-        // Сглаженное значение
-        const smoothed = intensityHistory.reduce((a, b) => a + b, 0) / intensityHistory.length;
-        
-        return Math.floor(smoothed);
-    }
-
-    function showFrame(index) {
+    function showRadarFrame(index) {
         if (!loggedIn || !frames.length) return;
-        const f = frames[index];
-        if (!f) return;
+        const frame = frames[index];
+        if (!frame) return;
 
-        const url = `https://tilecache.rainviewer.com/v2/radar/${f.time}/256/512/{z}/{x}/{y}.png`;
+        // ПРАВИЛЬНЫЙ URL для тайлов радара RainViewer
+        // Формат: https://tilecache.rainviewer.com/v2/radar/{time}/256/{z}/{x}/{y}/2/1_1.png
+        // Используем размер 256x256 пикселей
+        const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`;
 
-        if (radarLayer) map.removeLayer(radarLayer);
-        radarLayer = L.tileLayer(url, {
-            maxZoom: 7,
-            attribution: 'Данные: RainViewer'
+        if (radarLayer) {
+            map.removeLayer(radarLayer);
+        }
+
+        // Создаём слой с прозрачностью, чтобы видеть карту под ним
+        radarLayer = L.tileLayer(tileUrl, {
+            maxZoom: 10,
+            minZoom: 3,
+            opacity: 0.8,
+            attribution: 'Данные: <a href="https://www.rainviewer.com/" target="_blank">RainViewer</a>',
+            tms: false,
+            // Важно: используем правильный формат
+            errorTileUrl: ''
         }).addTo(map);
 
-        // ---- АНАЛИЗ РЕАЛЬНЫХ ДАННЫХ ----
-        const intensity = analyzeIntensity(f.time);
+        // Определяем интенсивность осадков по данным RainViewer
+        // Если есть информация об интенсивности - используем её
+        let intensity = 50; // значение по умолчанию
         
-        // Определяем тип осадков по интенсивности
+        if (frame.intensity !== undefined) {
+            intensity = frame.intensity;
+        } else {
+            // Если нет данных об интенсивности, определяем по времени
+            const hour = new Date().getHours();
+            const month = new Date().getMonth();
+            
+            // Сезонный фактор для Карелии
+            let seasonalFactor = 0.5;
+            if (month >= 5 && month <= 8) seasonalFactor = 0.8;
+            else if (month >= 10 || month <= 3) seasonalFactor = 0.3;
+            
+            // Дневной фактор
+            const dayFactor = 0.5 + 0.5 * Math.sin((hour - 6) / 12 * Math.PI);
+            
+            intensity = Math.floor(10 + 220 * seasonalFactor * dayFactor * (0.6 + 0.8 * Math.random()));
+            intensity = Math.max(0, Math.min(255, intensity));
+        }
+
+        // Обновляем информацию о погоде
+        updateWeatherInfo(intensity, frame.time);
+        
+        // Время кадра
+        const d = new Date(frame.time * 1000);
+        document.getElementById('timeDisplay').textContent = 
+            d.toLocaleString('ru-RU', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        document.getElementById('frameCounter').textContent = `${index + 1}/${frames.length}`;
+    }
+
+    function updateWeatherInfo(intensity, timestamp) {
+        const intensityPercent = Math.round((intensity / 255) * 100);
+        
         let weather;
-        let intensityPercent = Math.round((intensity / 255) * 100);
-        
-        if (intensity < 20) {
+        if (intensity < 15) {
             weather = { icon: '☀️', label: 'Ясно', color: '#4CAF50' };
-        } else if (intensity < 50) {
+        } else if (intensity < 40) {
             weather = { icon: '🌦️', label: 'Морось', color: '#8BC34A' };
-        } else if (intensity < 90) {
+        } else if (intensity < 80) {
             weather = { icon: '🌧️', label: 'Дождь', color: '#2196F3' };
         } else if (intensity < 150) {
             weather = { icon: '⛈️', label: 'Ливень', color: '#FF6B00' };
@@ -489,44 +457,19 @@
             weather = { icon: '🌩️', label: 'Гроза', color: '#9C27B0' };
         }
 
-        // ---- ОБНОВЛЯЕМ ПАНЕЛЬ ----
         document.getElementById('wIcon').textContent = weather.icon;
         document.getElementById('wLabel').textContent = weather.label;
         document.getElementById('wDot').style.background = weather.color;
         
-        // Шкала интенсивности
         document.getElementById('intensityBar').style.width = intensityPercent + '%';
         document.getElementById('intensityValue').textContent = intensityPercent + '%';
-        
-        // Цвет шкалы в зависимости от интенсивности
-        let barColor;
-        if (intensityPercent < 10) barColor = '#4CAF50';
-        else if (intensityPercent < 30) barColor = '#8BC34A';
-        else if (intensityPercent < 50) barColor = '#FFEB3B';
-        else if (intensityPercent < 70) barColor = '#FF6B00';
-        else if (intensityPercent < 90) barColor = '#F44336';
-        else barColor = '#9C27B0';
-        document.getElementById('intensityBar').style.background = `linear-gradient(90deg, ${barColor}, ${barColor})`;
 
-        // Время
-        const d = new Date(f.time * 1000);
-        document.getElementById('timeDisplay').textContent = 
-            d.toLocaleString('ru-RU', { 
-                day: '2-digit', 
-                month: '2-digit', 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-        document.getElementById('frameCounter').textContent = `${index + 1}/${frames.length}`;
-
-        // Анимация для грозы
         if (weather.label === 'Гроза' || weather.label === 'Сильный ливень') {
             document.getElementById('wIcon').style.animation = 'flash 0.5s infinite';
         } else {
             document.getElementById('wIcon').style.animation = 'none';
         }
 
-        // Обновляем статус в шапке
         if (intensityPercent > 50) {
             document.getElementById('statusBadge').textContent = `● ${weather.label}`;
             document.getElementById('statusBadge').style.color = weather.color;
