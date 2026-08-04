@@ -2,18 +2,21 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Радар Карелии</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            background: #0b1120;
+            overscroll-behavior: none;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
             color: #e2e8f0;
-            height: 100vh;
-            overflow: hidden;
         }
 
         /* LOGIN */
@@ -82,14 +85,13 @@
         #map { width: 100%; height: 100%; background: #0b1120; }
         .leaflet-container { background: #0b1120; }
 
-        /* Молнии */
         #lightning-iframe {
             width: 100%;
             height: 100%;
             border: none;
         }
 
-        /* ОЯ */
+        /* ========== ОЯ — максимально жёсткая обрезка ========== */
         #oya-panel {
             display: none;
             background: #0b1120;
@@ -99,16 +101,16 @@
         }
 
         .oya-legend {
-            width: 145px;
-            min-width: 145px;
+            width: 135px;
+            min-width: 135px;
             background: #1e293b;
             border-right: 1px solid #334155;
-            padding: 10px 8px;
+            padding: 10px 6px;
             overflow-y: auto;
             font-size: 10px;
-            line-height: 1.3;
+            line-height: 1.25;
             color: #e2e8f0;
-            z-index: 10;
+            z-index: 30;
         }
         .oya-legend h3 {
             font-size: 11px;
@@ -119,12 +121,12 @@
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             margin-bottom: 3px;
         }
         .legend-color {
-            width: 13px;
-            height: 10px;
+            width: 12px;
+            height: 9px;
             border-radius: 2px;
             flex-shrink: 0;
             border: 1px solid rgba(255,255,255,0.12);
@@ -133,19 +135,38 @@
         .oya-map-wrap {
             flex: 1;
             position: relative;
-            overflow: hidden; /* нельзя прокрутить */
+            overflow: hidden !important;
+            touch-action: none !important;
+            overscroll-behavior: none !important;
+            -webkit-overflow-scrolling: auto;
             background: #0b1120;
         }
 
-        /* Жёсткая обрезка nowcast — только карта */
-        #oya-iframe {
+        /* Невидимые блоки, которые ловят все жесты сверху и снизу */
+        .oya-blocker-top,
+        .oya-blocker-bottom {
             position: absolute;
-            top: -145px;                 /* убираем весь верх */
             left: 0;
             width: 100%;
-            height: calc(100% + 290px);  /* убираем весь низ */
-            border: none;
-            /* оригинальные цвета */
+            height: 80px;
+            z-index: 25;
+            background: transparent;
+            touch-action: none;
+        }
+        .oya-blocker-top { top: 0; }
+        .oya-blocker-bottom { bottom: 0; }
+
+        #oya-iframe {
+            position: absolute;
+            top: -280px;                       /* очень сильная обрезка верха */
+            left: -15px;
+            width: calc(100% + 30px);
+            height: calc(100% + 560px);        /* очень сильная обрезка низа */
+            border: none !important;
+            outline: none !important;
+            overflow: hidden !important;
+            transform: scale(1.03);
+            transform-origin: center center;
         }
     </style>
 </head>
@@ -225,9 +246,15 @@
                 <div class="legend-item"><div class="legend-color" style="background:#9900cc"></div> шквал сильный</div>
                 <div class="legend-item"><div class="legend-color" style="background:#4d4d4d"></div> смерч</div>
             </div>
-            <div class="oya-map-wrap">
+
+            <div class="oya-map-wrap" id="oyaWrap">
+                <!-- Блокираторы жестов -->
+                <div class="oya-blocker-top"></div>
+                <div class="oya-blocker-bottom"></div>
+
                 <iframe id="oya-iframe"
                     src="https://www.nowcast.ru/RAD/demo.html"
+                    scrolling="no"
                     allowfullscreen>
                 </iframe>
             </div>
@@ -290,6 +317,20 @@
 
         if (tab === 'radar' && map) setTimeout(() => map.invalidateSize(), 50);
     }
+
+    // Жёсткая блокировка скролла на ОЯ
+    document.addEventListener('DOMContentLoaded', () => {
+        const wrap = document.getElementById('oyaWrap');
+        if (wrap) {
+            wrap.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+            }, { passive: false });
+
+            wrap.addEventListener('wheel', function(e) {
+                e.preventDefault();
+            }, { passive: false });
+        }
+    });
 
     function initMap() {
         map = L.map('map', { maxZoom: 12, minZoom: 5, zoomControl: true })
