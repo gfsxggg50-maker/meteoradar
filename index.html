@@ -90,32 +90,62 @@
             overflow: hidden;
         }
         
-        /* Если карта через iframe — обрезаем её */
+        /* Обрезаем карту через iframe */
         #map-container iframe {
             position: absolute;
-            top: -80px;      /* Сдвигаем вверх, чтобы скрыть шапку сайта */
+            top: -100px;      /* Сдвигаем вверх, чтобы скрыть шапку сайта */
             left: 0;
             width: 100%;
-            height: calc(100% + 160px); /* Растягиваем, чтобы заполнить */
+            height: calc(100% + 200px); /* Растягиваем, чтобы заполнить */
             border: none;
             display: block;
             background: #0a0e17;
             pointer-events: auto;
         }
 
-        /* --- НАЗВАНИЕ СТАНЦИИ (сверху слева) --- */
-        .station-name {
+        /* --- ПАНЕЛЬ УПРАВЛЕНИЯ (как на nowcast.space) --- */
+        .control-panel {
             position: absolute;
-            top: 24px;
-            left: 24px;
+            top: 20px;
+            left: 20px;
             z-index: 1000;
-            color: rgba(255,255,255,0.12);
-            font-size: 11px;
-            letter-spacing: 2px;
-            pointer-events: none;
-            text-transform: uppercase;
-            font-weight: 300;
+            background: rgba(10, 14, 23, 0.85);
+            backdrop-filter: blur(14px);
+            border-radius: 14px;
+            padding: 14px 18px;
+            border: 1px solid rgba(255,255,255,0.06);
+            color: #e8edf5;
+            font-size: 12px;
+            min-width: 140px;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.6);
         }
+        .control-panel h4 {
+            font-size: 10px;
+            font-weight: 600;
+            color: #8ab4f8;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            padding-bottom: 6px;
+        }
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px 0;
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+            cursor: pointer;
+            transition: 0.25s;
+        }
+        .control-item:hover { color: #fff; }
+        .control-item .icon {
+            font-size: 14px;
+            width: 20px;
+            text-align: center;
+        }
+        .control-item.active { color: #8ab4f8; }
 
         /* --- ПАНЕЛЬ ИСТОЧНИКОВ ГРОЗ (сверху справа) --- */
         .source-panel {
@@ -123,11 +153,11 @@
             top: 20px;
             right: 20px;
             z-index: 1000;
-            background: rgba(10, 14, 23, 0.82);
+            background: rgba(10, 14, 23, 0.85);
             backdrop-filter: blur(14px);
             border-radius: 14px;
             padding: 14px 18px;
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.06);
             color: #e8edf5;
             font-size: 12px;
             min-width: 130px;
@@ -152,22 +182,18 @@
             color: rgba(255,255,255,0.5);
             cursor: pointer;
             transition: 0.25s;
-            border-radius: 4px;
-            padding-left: 4px;
         }
-        .source-item:hover { color: #fff; background: rgba(255,255,255,0.03); }
+        .source-item:hover { color: #fff; }
         .source-item .dot {
             width: 9px;
             height: 9px;
             border-radius: 50%;
             display: inline-block;
             flex-shrink: 0;
-            box-shadow: 0 0 12px rgba(255,255,255,0.05);
         }
         .source-item.active { color: #8ab4f8; }
-        .source-item.active .dot { box-shadow: 0 0 16px currentColor; }
 
-        /* --- ЛЕГЕНДА ОПАСНЫХ ЯВЛЕНИЙ (снизу справа) --- */
+        /* --- ЛЕГЕНДА (как на nowcast.space) --- */
         .legend-panel {
             position: absolute;
             bottom: 30px;
@@ -181,7 +207,7 @@
             color: #e8edf5;
             font-size: 11px;
             min-width: 160px;
-            max-height: 60vh;
+            max-height: 55vh;
             overflow-y: auto;
             box-shadow: 0 12px 48px rgba(0,0,0,0.6);
         }
@@ -214,6 +240,12 @@
             border: 1px solid rgba(255,255,255,0.04);
             flex-shrink: 0;
         }
+        .legend-number {
+            color: rgba(255,255,255,0.2);
+            font-size: 9px;
+            width: 16px;
+            text-align: right;
+        }
 
         /* --- ВРЕМЯ (снизу слева) --- */
         .time-info {
@@ -238,13 +270,22 @@
             #password-screen input { width: 220px; font-size: 18px; padding: 14px 20px; }
             #password-screen button { padding: 14px 40px; font-size: 16px; }
             
-            .station-name { top: 14px; left: 14px; font-size: 9px; }
+            .control-panel {
+                top: 12px;
+                left: 12px;
+                padding: 10px 14px;
+                font-size: 10px;
+                min-width: 90px;
+            }
+            .control-panel h4 { font-size: 9px; }
+            .control-item { font-size: 10px; padding: 3px 0; }
+            
             .source-panel {
                 top: 12px;
                 right: 12px;
                 padding: 10px 14px;
                 font-size: 10px;
-                min-width: 90px;
+                min-width: 80px;
             }
             .source-panel h4 { font-size: 9px; }
             .source-item { font-size: 10px; padding: 3px 0; }
@@ -256,10 +297,12 @@
                 padding: 12px 14px;
                 font-size: 9px;
                 min-width: 110px;
-                max-height: 45vh;
+                max-height: 40vh;
             }
             .legend-panel h4 { font-size: 10px; }
             .legend-color { width: 18px; height: 12px; }
+            .legend-number { font-size: 8px; width: 14px; }
+            
             .time-info {
                 bottom: 16px;
                 left: 12px;
@@ -267,7 +310,6 @@
                 padding: 4px 12px;
             }
             
-            /* Обрезаем карту сильнее на телефоне */
             #map-container iframe {
                 top: -40px;
                 height: calc(100% + 80px);
@@ -295,10 +337,16 @@
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals">
         </iframe>
 
-        <!-- НАЗВАНИЕ СТАНЦИИ -->
-        <div class="station-name">Центральная Аэрологическая Обсерватория</div>
+        <!-- ПАНЕЛЬ УПРАВЛЕНИЯ (слева) -->
+        <div class="control-panel">
+            <h4>Управление</h4>
+            <div class="control-item active"><span class="icon">▶</span> Анимация</div>
+            <div class="control-item"><span class="icon">⏹</span> Стоп</div>
+            <div class="control-item"><span class="icon">⟳</span> Обновить</div>
+            <div class="control-item"><span class="icon">🗺️</span> Слои</div>
+        </div>
 
-        <!-- ПАНЕЛЬ ИСТОЧНИКОВ ГРОЗ -->
+        <!-- ПАНЕЛЬ ИСТОЧНИКОВ ГРОЗ (справа) -->
         <div class="source-panel">
             <h4>Источники гроз</h4>
             <div class="source-item active"><span class="dot" style="background:#ff6b6b;"></span> WWLLN</div>
@@ -308,7 +356,7 @@
             <div class="source-item"><span class="dot" style="background:#9b59b6;"></span> GLD360</div>
         </div>
 
-        <!-- ЛЕГЕНДА ОПАСНЫХ ЯВЛЕНИЙ -->
+        <!-- ЛЕГЕНДА -->
         <div class="legend-panel" id="legendPanel">
             <h4>Опасные явления</h4>
             <div id="legendItems"></div>
@@ -335,7 +383,6 @@
             if (passwordInput.value === CORRECT_PASSWORD) {
                 passwordScreen.style.display = 'none';
                 mapContainer.style.display = 'block';
-                // Загружаем карту с обрезанной шапкой
                 radarFrame.src = 'https://meteoinfo.ru/radanim';
             } else {
                 errorDiv.textContent = '❌ Неверный пароль';
@@ -350,28 +397,28 @@
         });
 
         // ============================================================
-        // 2. ЛЕГЕНДА (все 19 типов)
+        // 2. ЛЕГЕНДА (как на nowcast.space)
         // ============================================================
         const legendData = [
-            { label: 'Обл. в. ср. яр.', color: '#b0b0b0' },
-            { label: 'Слоист. обл.', color: '#8a9ba8' },
-            { label: 'Ос. слаб.', color: '#64b5f6' },
-            { label: 'Ос. умер.', color: '#1e88e5' },
-            { label: 'Ос. сильн.', color: '#0d47a1' },
-            { label: 'Куч. обл.', color: '#e0e0e0' },
-            { label: 'Лив. слаб.', color: '#43a047' },
-            { label: 'Лив. умер.', color: '#2e7d32' },
-            { label: 'Лив. сильн.', color: '#1b5e20' },
-            { label: 'Гроза (R)', color: '#ffeb3b' },
-            { label: 'Гроза (R)', color: '#fdd835' },
-            { label: 'Гроза (R)', color: '#f9a825' },
-            { label: 'Град слаб.', color: '#90a4ae' },
-            { label: 'Град умер.', color: '#78909c' },
-            { label: 'Град сильн.', color: '#546e7a' },
-            { label: 'Гроза+Шкв слаб.', color: '#ff9800' },
-            { label: 'Гроза+Шкв умер.', color: '#f57c00' },
-            { label: 'Гроза+Шкв сильн.', color: '#e65100' },
-            { label: 'Смерч', color: '#d32f2f' },
+            { number: 1, label: 'Обл. в. ср. яр.', color: '#b0b0b0' },
+            { number: 2, label: 'Слоист. обл.', color: '#8a9ba8' },
+            { number: 3, label: 'Ос. слаб.', color: '#64b5f6' },
+            { number: 4, label: 'Ос. умер.', color: '#1e88e5' },
+            { number: 5, label: 'Ос. сильн.', color: '#0d47a1' },
+            { number: 6, label: 'Куч. обл.', color: '#e0e0e0' },
+            { number: 7, label: 'Лив. слаб.', color: '#43a047' },
+            { number: 8, label: 'Лив. умер.', color: '#2e7d32' },
+            { number: 9, label: 'Лив. сильн.', color: '#1b5e20' },
+            { number: 10, label: 'Гроза (R)', color: '#ffeb3b' },
+            { number: 11, label: 'Гроза (R)', color: '#fdd835' },
+            { number: 12, label: 'Гроза (R)', color: '#f9a825' },
+            { number: 13, label: 'Град слаб.', color: '#90a4ae' },
+            { number: 14, label: 'Град умер.', color: '#78909c' },
+            { number: 15, label: 'Град сильн.', color: '#546e7a' },
+            { number: 16, label: 'Гроза+Шкв слаб.', color: '#ff9800' },
+            { number: 17, label: 'Гроза+Шкв умер.', color: '#f57c00' },
+            { number: 18, label: 'Гроза+Шкв сильн.', color: '#e65100' },
+            { number: 19, label: 'Смерч', color: '#d32f2f' },
         ];
 
         const container = document.getElementById('legendItems');
@@ -379,6 +426,7 @@
             const div = document.createElement('div');
             div.className = 'legend-item';
             div.innerHTML = `
+                <span class="legend-number">${item.number}</span>
                 <div class="legend-color" style="background:${item.color};"></div>
                 <span>${item.label}</span>
             `;
@@ -407,37 +455,41 @@
         });
 
         // ============================================================
-        // 5. СТРЕЛКИ НАПРАВЛЕНИЯ ГРОЗ (ЧЕРЕЗ КАНВАС)
+        // 5. УПРАВЛЕНИЕ (кнопки)
         // ============================================================
-        // Добавляем слой с стрелками поверх iframe
+        document.querySelectorAll('.control-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.control-item').forEach(el => el.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // ============================================================
+        // 6. СТРЕЛКИ НАПРАВЛЕНИЯ (через Canvas)
+        // ============================================================
         const canvas = document.createElement('canvas');
         canvas.style.position = 'absolute';
         canvas.style.top = '0';
         canvas.style.left = '0';
         canvas.style.width = '100%';
         canvas.style.height = '100%';
-        canvas.style.pointerEvents = 'none'; // Чтобы не мешать управлению картой
+        canvas.style.pointerEvents = 'none';
         canvas.style.zIndex = '500';
         document.getElementById('map-container').appendChild(canvas);
         
         const ctx = canvas.getContext('2d');
         
         function drawArrows() {
-            // Устанавливаем размер canvas под размер окна
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            
-            // Очищаем
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // ===== ДЕМО-СТРЕЛКИ (имитация направления) =====
-            // В реальности здесь должны быть координаты с API гроз
-            // Но для демонстрации мы рисуем несколько стрелок в разных местах
+            // Демо-стрелки (имитация направления)
             const arrows = [
-                { x: canvas.width * 0.3, y: canvas.height * 0.3, angle: 45, length: 60, color: '#ff6b6b', label: 'Гроза' },
-                { x: canvas.width * 0.5, y: canvas.height * 0.5, angle: 120, length: 50, color: '#ffd93d', label: 'Ливень' },
-                { x: canvas.width * 0.7, y: canvas.height * 0.4, angle: 200, length: 55, color: '#4d96ff', label: 'Гроза' },
-                { x: canvas.width * 0.4, y: canvas.height * 0.7, angle: 330, length: 45, color: '#6bcb77', label: 'Дождь' },
+                { x: canvas.width * 0.2, y: canvas.height * 0.3, angle: 45, length: 55, color: '#ff6b6b', label: 'Гроза' },
+                { x: canvas.width * 0.5, y: canvas.height * 0.4, angle: 120, length: 50, color: '#ffd93d', label: 'Ливень' },
+                { x: canvas.width * 0.7, y: canvas.height * 0.5, angle: 200, length: 60, color: '#4d96ff', label: 'Дождь' },
+                { x: canvas.width * 0.3, y: canvas.height * 0.7, angle: 330, length: 45, color: '#6bcb77', label: 'Осадки' },
                 { x: canvas.width * 0.8, y: canvas.height * 0.7, angle: 80, length: 50, color: '#ff6b6b', label: 'Гроза' },
             ];
             
@@ -446,7 +498,7 @@
                 const endX = arrow.x + Math.cos(rad) * arrow.length;
                 const endY = arrow.y + Math.sin(rad) * arrow.length;
                 
-                // Рисуем линию-стрелку
+                // Линия
                 ctx.beginPath();
                 ctx.moveTo(arrow.x, arrow.y);
                 ctx.lineTo(endX, endY);
@@ -457,11 +509,10 @@
                 ctx.stroke();
                 ctx.shadowBlur = 0;
                 
-                // Рисуем наконечник
+                // Наконечник
                 const angle = Math.atan2(endY - arrow.y, endX - arrow.x);
                 const headLen = 14;
                 const headAngle = 0.5;
-                
                 ctx.beginPath();
                 ctx.moveTo(endX, endY);
                 ctx.lineTo(endX - headLen * Math.cos(angle - headAngle), endY - headLen * Math.sin(angle - headAngle));
@@ -473,7 +524,7 @@
                 ctx.fill();
                 ctx.shadowBlur = 0;
                 
-                // Рисуем кружок в начале
+                // Кружок
                 ctx.beginPath();
                 ctx.arc(arrow.x, arrow.y, 6, 0, 2 * Math.PI);
                 ctx.fillStyle = arrow.color;
@@ -492,16 +543,12 @@
             });
         }
         
-        // Рисуем стрелки при загрузке и изменении размера
         drawArrows();
         window.addEventListener('resize', drawArrows);
-        
-        // Перерисовываем каждые 5 секунд (для анимации)
         setInterval(drawArrows, 5000);
         
         console.log('✅ МЕТЕОРАДАР загружен!');
-        console.log('🌩️ Стрелки показывают направление движения гроз и осадков.');
-        console.log('🔍 Используйте колесо мыши или жесты для приближения.');
+        console.log('🌩️ Интерфейс как на nowcast.space, данные с meteoinfo.ru');
     </script>
 
 </body>
