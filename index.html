@@ -82,14 +82,14 @@
         #map { width: 100%; height: 100%; background: #0b1120; }
         .leaflet-container { background: #0b1120; }
 
-        /* Молнии — без фильтров */
+        /* Молнии */
         #lightning-iframe {
             width: 100%;
             height: 100%;
             border: none;
         }
 
-        /* ОЯ — жёсткая обрезка */
+        /* ОЯ */
         #oya-panel {
             display: none;
             background: #0b1120;
@@ -99,8 +99,8 @@
         }
 
         .oya-legend {
-            width: 148px;
-            min-width: 148px;
+            width: 145px;
+            min-width: 145px;
             background: #1e293b;
             border-right: 1px solid #334155;
             padding: 10px 8px;
@@ -133,18 +133,19 @@
         .oya-map-wrap {
             flex: 1;
             position: relative;
-            overflow: hidden;          /* важно — нельзя прокрутить */
+            overflow: hidden; /* нельзя прокрутить */
             background: #0b1120;
         }
 
+        /* Жёсткая обрезка nowcast — только карта */
         #oya-iframe {
             position: absolute;
-            top: -58px;                /* обрезаем верхнюю панель */
+            top: -145px;                 /* убираем весь верх */
             left: 0;
             width: 100%;
-            height: calc(100% + 115px); /* обрезаем нижнюю панель */
+            height: calc(100% + 290px);  /* убираем весь низ */
             border: none;
-            /* никаких фильтров — оригинальные цвета */
+            /* оригинальные цвета */
         }
     </style>
 </head>
