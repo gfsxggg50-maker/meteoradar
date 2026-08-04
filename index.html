@@ -33,16 +33,8 @@
             max-width: 360px;
             text-align: center;
         }
-        .login-box h1 {
-            font-size: 24px;
-            margin-bottom: 8px;
-            color: #38bdf8;
-        }
-        .login-box p {
-            font-size: 14px;
-            color: #94a3b8;
-            margin-bottom: 28px;
-        }
+        .login-box h1 { font-size: 24px; margin-bottom: 8px; color: #38bdf8; }
+        .login-box p { font-size: 14px; color: #94a3b8; margin-bottom: 28px; }
         .login-box input {
             width: 100%;
             padding: 12px 16px;
@@ -67,12 +59,7 @@
             cursor: pointer;
         }
         .login-box button:hover { background: #0284c7; }
-        .error {
-            color: #f87171;
-            font-size: 13px;
-            margin-top: 12px;
-            display: none;
-        }
+        .error { color: #f87171; font-size: 13px; margin-top: 12px; display: none; }
 
         /* === MAIN === */
         #main-screen {
@@ -86,72 +73,71 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 14px;
+            padding: 0 12px;
             border-bottom: 1px solid #334155;
             z-index: 1000;
-            gap: 10px;
+            gap: 8px;
         }
         .header-left {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
         .header h2 {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             color: #38bdf8;
             white-space: nowrap;
         }
         .author {
-            font-size: 12px;
+            font-size: 11px;
             color: #64748b;
             white-space: nowrap;
         }
         .tabs {
             display: flex;
-            gap: 4px;
+            gap: 3px;
             background: #0f172a;
             padding: 3px;
             border-radius: 8px;
         }
         .tab-btn {
-            padding: 6px 16px;
+            padding: 6px 12px;
             border: none;
             border-radius: 6px;
             background: transparent;
             color: #94a3b8;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.15s;
+            white-space: nowrap;
         }
         .tab-btn.active {
             background: #0ea5e9;
             color: white;
         }
-        .tab-btn:hover:not(.active) {
-            color: #e2e8f0;
-        }
+        .tab-btn:hover:not(.active) { color: #e2e8f0; }
         #timestamp {
-            font-size: 13px;
+            font-size: 12px;
             color: #e2e8f0;
-            min-width: 110px;
+            min-width: 100px;
             text-align: center;
         }
         .controls {
             display: flex;
-            gap: 5px;
+            gap: 4px;
             align-items: center;
         }
         .controls button {
-            width: 34px;
-            height: 34px;
+            width: 32px;
+            height: 32px;
             border: 1px solid #475569;
-            border-radius: 7px;
+            border-radius: 6px;
             background: #0f172a;
             color: #e2e8f0;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
         }
         .controls button:hover {
             background: #334155;
@@ -161,9 +147,9 @@
             background: transparent;
             border: 1px solid #475569;
             color: #94a3b8;
-            padding: 5px 10px;
+            padding: 5px 9px;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 11px;
             cursor: pointer;
         }
         .logout-btn:hover {
@@ -176,28 +162,67 @@
             position: relative;
             overflow: hidden;
         }
-        #radar-panel, #lightning-panel {
+        .panel {
             position: absolute;
             inset: 0;
             display: none;
         }
-        #radar-panel.active, #lightning-panel.active {
-            display: block;
-        }
+        .panel.active { display: block; }
+
         #map {
             width: 100%;
             height: 100%;
             background: #0b1120;
         }
-        #lightning-iframe {
+        #lightning-iframe, #oya-iframe {
             width: 100%;
             height: 100%;
             border: none;
         }
+        .leaflet-container { background: #0b1120; }
 
-        /* Тёмная карта в стиле LightningMaps */
-        .leaflet-container {
+        /* === Легенда ОЯ (как на скриншоте) === */
+        #oya-panel {
+            display: none;
             background: #0b1120;
+        }
+        #oya-panel.active {
+            display: flex;
+        }
+        .oya-legend {
+            width: 210px;
+            min-width: 210px;
+            background: #1e293b;
+            border-right: 1px solid #334155;
+            padding: 12px 10px;
+            overflow-y: auto;
+            font-size: 11px;
+            line-height: 1.35;
+            color: #e2e8f0;
+        }
+        .oya-legend h3 {
+            font-size: 12px;
+            color: #38bdf8;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+        .legend-color {
+            width: 18px;
+            height: 12px;
+            border-radius: 2px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .oya-map-wrap {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -207,7 +232,7 @@
 <div id="login-screen">
     <div class="login-box">
         <h1>🌧 Радар Карелии</h1>
-        <p>Осадки + грозопеленгация</p>
+        <p>Осадки + молнии + ОЯ</p>
         <input type="text" id="username" placeholder="Логин" autocomplete="username">
         <input type="password" id="password" placeholder="Пароль" autocomplete="current-password">
         <button onclick="tryLogin()">Войти</button>
@@ -226,6 +251,7 @@
         <div class="tabs">
             <button class="tab-btn active" id="tab-radar" onclick="switchTab('radar')">Осадки</button>
             <button class="tab-btn" id="tab-lightning" onclick="switchTab('lightning')">Молнии</button>
+            <button class="tab-btn" id="tab-oya" onclick="switchTab('oya')">ОЯ</button>
         </div>
 
         <span id="timestamp">—</span>
@@ -240,17 +266,51 @@
     </div>
 
     <div id="content">
-        <!-- Радар -->
-        <div id="radar-panel" class="active">
+        <!-- Осадки -->
+        <div id="radar-panel" class="panel active">
             <div id="map"></div>
         </div>
 
         <!-- Молнии -->
-        <div id="lightning-panel">
+        <div id="lightning-panel" class="panel">
             <iframe id="lightning-iframe"
-                src="https://map.blitzortung.org/index.php?interactive=1&NavigationControl=0&FullScreenControl=0&Cookies=0&InfoDiv=0&MenuButtonDiv=0&ScaleControl=0&Advertisment=0&MapStyle=2&MapStyleRangeValue=8#7/61.78/34.35"
+                src="https://map.blitzortung.org/index.php?interactive=1&NavigationControl=0&FullScreenControl=0&Cookies=0&InfoDiv=0&MenuButtonDiv=0&ScaleControl=0&Advertisment=0&MapStyle=2&MapStyleRangeValue=10&LinksCheckboxChecked=0&DetectorsCheckboxChecked=0&CoverageCheckboxChecked=0&RegionCheckboxChecked=0#7/61.78/34.35"
                 allowfullscreen>
             </iframe>
+        </div>
+
+        <!-- ОЯ (Опасные явления) -->
+        <div id="oya-panel" class="panel">
+            <div class="oya-legend">
+                <h3>Типы явлений</h3>
+
+                <div class="legend-item"><div class="legend-color" style="background:#ffff00"></div> Обл. в. ср. яр.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#00ffff"></div> Слоист. обл.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#00ff00"></div> Ос. слаб.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#00cc00"></div> Ос. умерен.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#009900"></div> Ос. сильн.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#006600"></div> Оч. сильн.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#66ff99"></div> Куч. обл.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#33ccff"></div> Лив. слаб.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#0099ff"></div> Лив. умерен.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#0066cc"></div> Лив. сильн.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#ff99cc"></div> Гроза (R)</div>
+                <div class="legend-item"><div class="legend-color" style="background:#ff66aa"></div> Гроза R</div>
+                <div class="legend-item"><div class="legend-color" style="background:#ff3366"></div> Гроза R+</div>
+                <div class="legend-item"><div class="legend-color" style="background:#cc9966"></div> Град слаб.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#996633"></div> Град умерен.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#663300"></div> Град сильн.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#cc66ff"></div> Гроз+Шкв слаб.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#9933cc"></div> Гроз+Шкв умерен.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#660099"></div> Гроз+Шкв сильн.</div>
+                <div class="legend-item"><div class="legend-color" style="background:#000000; border-color:#fff"></div> Смерч</div>
+            </div>
+            <div class="oya-map-wrap">
+                <iframe id="oya-iframe"
+                    src="https://www.nowcast.ru/RAD/demo.html"
+                    allowfullscreen>
+                </iframe>
+            </div>
         </div>
     </div>
 </div>
@@ -308,10 +368,7 @@
         document.getElementById('login-screen').style.display = 'flex';
         document.getElementById('username').value = '';
         document.getElementById('password').value = '';
-        if (map) {
-            map.remove();
-            map = null;
-        }
+        if (map) { map.remove(); map = null; }
         layerCache = {};
         currentLayer = null;
     }
@@ -322,9 +379,11 @@
 
         document.getElementById('tab-radar').classList.toggle('active', tab === 'radar');
         document.getElementById('tab-lightning').classList.toggle('active', tab === 'lightning');
+        document.getElementById('tab-oya').classList.toggle('active', tab === 'oya');
 
         document.getElementById('radar-panel').classList.toggle('active', tab === 'radar');
         document.getElementById('lightning-panel').classList.toggle('active', tab === 'lightning');
+        document.getElementById('oya-panel').classList.toggle('active', tab === 'oya');
 
         document.getElementById('radar-controls').style.display = tab === 'radar' ? 'flex' : 'none';
         document.getElementById('timestamp').style.display = tab === 'radar' ? 'block' : 'none';
@@ -342,7 +401,6 @@
             zoomControl: true
         }).setView(KARELIA_CENTER, KARELIA_ZOOM);
 
-        // Тёмная подложка в стиле LightningMaps
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 19,
             subdomains: 'abcd'
