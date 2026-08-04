@@ -85,9 +85,17 @@
         #map { width: 100%; height: 100%; background: #0b1120; }
         .leaflet-container { background: #0b1120; }
 
+        /* ========== МОЛНИИ — обрезка иконок ========== */
+        #lightning-panel {
+            overflow: hidden;
+            background: #0b1120;
+        }
         #lightning-iframe {
-            width: 100%;
-            height: 100%;
+            position: absolute;
+            top: -15px;
+            left: -55px;                 /* убираем молнию слева */
+            width: calc(100% + 120px);
+            height: calc(100% + 70px);   /* убираем кнопку i снизу */
             border: none;
         }
 
@@ -138,7 +146,6 @@
             overflow: hidden !important;
             touch-action: none !important;
             overscroll-behavior: none !important;
-            -webkit-overflow-scrolling: auto;
             background: #0b1120;
         }
 
@@ -155,7 +162,6 @@
         .oya-blocker-top { top: 0; }
         .oya-blocker-bottom { bottom: 0; }
 
-        /* Обрезка: верх + низ + правая белая панель */
         #oya-iframe {
             position: absolute;
             top: -280px;
@@ -317,7 +323,6 @@
         if (tab === 'radar' && map) setTimeout(() => map.invalidateSize(), 50);
     }
 
-    // Блокировка скролла на ОЯ
     document.addEventListener('DOMContentLoaded', () => {
         const wrap = document.getElementById('oyaWrap');
         if (wrap) {
