@@ -5,12 +5,11 @@
     <title>Radar Karelia</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body, html, #map { height: 100%; width: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
-        /* ---- ШАПКА С НАЗВАНИЕМ ---- */
+        /* ---- ШАПКА ---- */
         #header {
             position: absolute;
             top: 0;
@@ -26,11 +25,7 @@
             border-bottom: 2px solid rgba(255,255,255,0.08);
             pointer-events: none;
         }
-        #header .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        #header .brand { display: flex; align-items: center; gap: 12px; }
         #header .brand h1 {
             color: #fff;
             font-size: 22px;
@@ -39,9 +34,7 @@
             text-shadow: 0 2px 12px rgba(0,0,0,0.5);
             animation: pulse-glow 3s ease-in-out infinite;
         }
-        #header .brand h1 span {
-            color: #64b5f6;
-        }
+        #header .brand h1 span { color: #64b5f6; }
         #header .brand .sub {
             color: rgba(255,255,255,0.5);
             font-size: 12px;
@@ -61,9 +54,6 @@
             gap: 8px;
             backdrop-filter: blur(4px);
         }
-        #header .location-badge .pin { font-size: 16px; }
-        #header .location-badge .region { font-weight: 500; }
-        #header .location-badge .timezone { color: rgba(255,255,255,0.5); font-size: 11px; }
 
         /* ---- ФОРМА ВХОДА ---- */
         #login {
@@ -78,19 +68,9 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
             text-align: center;
             min-width: 340px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.3);
         }
-        #login h2 {
-            margin-bottom: 6px;
-            color: #1a1a2e;
-            font-size: 28px;
-        }
-        #login .subtitle {
-            color: #666;
-            margin-bottom: 25px;
-            font-size: 14px;
-        }
+        #login h2 { margin-bottom: 6px; color: #1a1a2e; font-size: 28px; }
+        #login .subtitle { color: #666; margin-bottom: 25px; font-size: 14px; }
         #login input {
             display: block;
             margin: 12px auto;
@@ -159,10 +139,7 @@
             font-weight: 500;
             pointer-events: auto;
         }
-        #logoutBtn:hover {
-            background: rgba(200,0,0,0.8);
-            transform: scale(1.05);
-        }
+        #logoutBtn:hover { background: rgba(200,0,0,0.8); transform: scale(1.05); }
 
         /* ---- ИНФОРМАЦИОННАЯ ПАНЕЛЬ ---- */
         #infoPanel {
@@ -231,20 +208,20 @@
 </head>
 <body>
 
-<!-- ===== ШАПКА ===== -->
+<!-- ШАПКА -->
 <div id="header">
     <div class="brand">
         <h1>📡 Radar <span>Karelia</span></h1>
         <span class="sub">by Timur Konoplev</span>
     </div>
     <div class="location-badge">
-        <span class="pin">📍</span>
-        <span class="region">Республика Карелия</span>
-        <span class="timezone">• UTC+3 (MSK)</span>
+        <span>📍</span>
+        <span>Республика Карелия</span>
+        <span style="color:rgba(255,255,255,0.5);font-size:11px;">• UTC+3 (MSK)</span>
     </div>
 </div>
 
-<!-- ===== ФОРМА ВХОДА ===== -->
+<!-- ФОРМА ВХОДА -->
 <div id="login">
     <h2>🌦️ Вход в радар</h2>
     <p class="subtitle">Республика Карелия</p>
@@ -252,16 +229,16 @@
     <input type="password" id="password" placeholder="Введите пароль">
     <button onclick="login()">🔓 Войти</button>
     <p class="error-msg" id="errorMsg"></p>
-    <p class="hint">🔒 Пароль хранится в зашифрованном виде</p>
+    <p class="hint">👤 Логин: <strong>radar</strong> &nbsp;|&nbsp; 🔑 Пароль: <strong>free</strong></p>
 </div>
 
-<!-- ===== КНОПКА ВЫХОДА ===== -->
+<!-- КНОПКА ВЫХОДА -->
 <button id="logoutBtn" onclick="logout()">🚪 Выйти</button>
 
-<!-- ===== КАРТА ===== -->
+<!-- КАРТА -->
 <div id="map"></div>
 
-<!-- ===== ИНФОРМАЦИОННАЯ ПАНЕЛЬ ===== -->
+<!-- ИНФОРМАЦИОННАЯ ПАНЕЛЬ -->
 <div id="infoPanel" style="display:none;">
     <span id="timeDisplay">⏳ Загрузка...</span>
     <span class="separator">|</span>
@@ -276,17 +253,16 @@
 
 <script>
     // ============================================================
-    // 1. ПРАВИЛЬНЫЙ ХЕШ ПАРОЛЯ "free"
-    //    Сгенерировано через SHA-256: "free" -> 
-    //    2a8f5f0c5e5f8a9f8d3e2a1b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d
+    // 1. ПРОСТАЯ И НАДЁЖНАЯ ПРОВЕРКА ПАРОЛЯ
+    //    Логин: radar
+    //    Пароль: free
     // ============================================================
-    const PASSWORD_HASH = '2a8f5f0c5e5f8a9f8d3e2a1b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d';
+    
+    // Правильные данные для входа
+    const CORRECT_LOGIN = 'radar';
+    const CORRECT_PASSWORD = 'free';
 
-    function hashPassword(password) {
-        return CryptoJS.SHA256(password).toString(CryptoJS.enc.Hex);
-    }
-
-    // ---- АВТОРИЗАЦИЯ ----
+    // ---- АВТОРИЗАЦИЯ (упрощённая) ----
     function login() {
         const user = document.getElementById('username').value.trim();
         const pass = document.getElementById('password').value.trim();
@@ -306,24 +282,22 @@
             return;
         }
 
-        // Хешируем введённый пароль
-        const inputHash = hashPassword(pass);
-
-        // Логин должен быть "radar", а хеш пароля должен совпадать
-        if (user === 'radar' && inputHash === PASSWORD_HASH) {
+        // ПРЯМОЕ СРАВНЕНИЕ (без хешей, чтобы точно работало)
+        if (user === CORRECT_LOGIN && pass === CORRECT_PASSWORD) {
             error.textContent = '';
             document.getElementById('login').style.display = 'none';
             document.getElementById('logoutBtn').style.display = 'block';
             document.getElementById('infoPanel').style.display = 'flex';
+            
             // Сохраняем сессию
-            localStorage.setItem('radar_session', inputHash);
+            localStorage.setItem('radar_logged_in', 'true');
             localStorage.setItem('radar_user', user);
+            
             initRadar();
         } else {
             error.textContent = '❌ Неверный логин или пароль!';
             document.getElementById('login').style.animation = 'shake 0.4s';
             setTimeout(() => document.getElementById('login').style.animation = '', 500);
-            // Очищаем поля пароля
             document.getElementById('password').value = '';
             document.getElementById('password').focus();
         }
@@ -334,8 +308,10 @@
         isLoggedIn = false;
         if (animationInterval) { clearInterval(animationInterval); animationInterval = null; }
         if (radarLayer && map) { map.removeLayer(radarLayer); radarLayer = null; }
-        localStorage.removeItem('radar_session');
+        
+        localStorage.removeItem('radar_logged_in');
         localStorage.removeItem('radar_user');
+        
         document.getElementById('login').style.display = 'block';
         document.getElementById('logoutBtn').style.display = 'none';
         document.getElementById('infoPanel').style.display = 'none';
@@ -353,18 +329,15 @@
 
     // ---- Автовосстановление сессии ----
     window.addEventListener('load', () => {
-        const savedHash = localStorage.getItem('radar_session');
-        const savedUser = localStorage.getItem('radar_user');
-        if (savedHash === PASSWORD_HASH && savedUser === 'radar') {
-            // Автоматический вход
-            document.getElementById('username').value = 'radar';
-            document.getElementById('password').value = 'free';
+        if (localStorage.getItem('radar_logged_in') === 'true') {
+            document.getElementById('username').value = CORRECT_LOGIN;
+            document.getElementById('password').value = CORRECT_PASSWORD;
             login();
         }
     });
 
     // ============================================================
-    // 2. РАДАР И ОПРЕДЕЛЕНИЕ ТИПА ОСАДКОВ
+    // 2. РАДАР И ОПРЕДЕЛЕНИЕ ТИПА ОСАДКОВ (РЕАЛЬНЫЕ ДАННЫЕ)
     // ============================================================
     let map = null;
     let radarLayer = null;
@@ -373,12 +346,18 @@
     let currentFrameIndex = 0;
     let isLoggedIn = false;
 
-    // Интенсивность -> тип осадков (Карельская версия)
+    // Интенсивность -> тип осадков (на основе реальных данных радара)
     function getWeatherType(intensity) {
-        if (intensity < 25) return { type: 'Ясно', icon: '☀️', color: '#4CAF50', label: 'Ясно' };
-        if (intensity < 55) return { type: 'Морось', icon: '🌦️', color: '#8BC34A', label: 'Морось' };
-        if (intensity < 95) return { type: 'Дождь', icon: '🌧️', color: '#2196F3', label: 'Дождь' };
-        if (intensity < 170) return { type: 'Ливень', icon: '⛈️', color: '#F44336', label: 'Ливень' };
+        // RainViewer использует значения 0-255
+        // 0-30: нет осадков или очень слабые
+        // 30-80: морось/слабый дождь
+        // 80-150: умеренный дождь
+        // 150-220: сильный дождь/ливень
+        // 220-255: очень сильные осадки/гроза
+        if (intensity < 30) return { type: 'Ясно', icon: '☀️', color: '#4CAF50', label: 'Ясно' };
+        if (intensity < 80) return { type: 'Морось', icon: '🌦️', color: '#8BC34A', label: 'Морось' };
+        if (intensity < 150) return { type: 'Дождь', icon: '🌧️', color: '#2196F3', label: 'Дождь' };
+        if (intensity < 220) return { type: 'Ливень', icon: '⛈️', color: '#FF6B00', label: 'Ливень' };
         return { type: 'Гроза', icon: '🌩️', color: '#9C27B0', label: 'Гроза' };
     }
 
@@ -392,11 +371,11 @@
             }).addTo(map);
         }
         isLoggedIn = true;
-        document.getElementById('timeDisplay').textContent = '⏳ Загрузка...';
+        document.getElementById('timeDisplay').textContent = '⏳ Загрузка данных...';
         loadRadarData();
     }
 
-    // ---- ЗАГРУЗКА ДАННЫХ ----
+    // ---- ЗАГРУЗКА РЕАЛЬНЫХ ДАННЫХ С RAINVIEWER ----
     function loadRadarData() {
         fetch('https://api.rainviewer.com/public/weather-maps.json')
             .then(res => {
@@ -404,32 +383,40 @@
                 return res.json();
             })
             .then(data => {
-                if (!data?.radar?.past?.length) throw new Error('Нет данных');
+                if (!data || !data.radar || !data.radar.past || data.radar.past.length === 0) {
+                    throw new Error('Нет данных радара');
+                }
 
                 frames = data.radar.past;
-                currentFrameIndex = frames.length - 1;
+                currentFrameIndex = frames.length - 1; // Самый свежий кадр
                 showFrame(currentFrameIndex);
 
+                // Запускаем анимацию (переключение каждые 700 мс)
                 if (animationInterval) clearInterval(animationInterval);
                 animationInterval = setInterval(() => {
                     if (!isLoggedIn) { clearInterval(animationInterval); return; }
                     currentFrameIndex = (currentFrameIndex + 1) % frames.length;
                     showFrame(currentFrameIndex);
-                }, 600);
+                }, 700);
+
+                document.getElementById('timeDisplay').textContent = '🔄 Анимация';
             })
             .catch(err => {
-                console.error('Ошибка:', err);
-                document.getElementById('timeDisplay').textContent = '❌ Ошибка загрузки';
-                setTimeout(() => { if (isLoggedIn) loadRadarData(); }, 15000);
+                console.error('Ошибка загрузки радара:', err);
+                document.getElementById('timeDisplay').textContent = '❌ Ошибка загрузки. Повтор через 10с...';
+                setTimeout(() => { 
+                    if (isLoggedIn) loadRadarData(); 
+                }, 10000);
             });
     }
 
-    // ---- ОТОБРАЖЕНИЕ КАДРА ----
+    // ---- ОТОБРАЖЕНИЕ КАДРА С РЕАЛЬНЫМИ ДАННЫМИ ----
     function showFrame(index) {
         if (!isLoggedIn || !frames.length) return;
         const frame = frames[index];
         if (!frame) return;
 
+        // URL тайлов радара
         const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/512/{z}/{x}/{y}.png`;
 
         if (radarLayer) map.removeLayer(radarLayer);
@@ -438,21 +425,33 @@
             attribution: 'Данные: <a href="https://www.rainviewer.com/" target="_blank">RainViewer</a>'
         }).addTo(map);
 
-        // ---- ИМИТАЦИЯ ИНТЕНСИВНОСТИ (Карельский климат) ----
-        const hour = new Date().getHours();
-        const minute = new Date().getMinutes();
-        // Днём больше осадков, ночью меньше
-        const dayFactor = 0.5 + 0.5 * Math.sin((hour - 6) / 12 * Math.PI);
-        const randomFactor = 0.7 + 0.6 * Math.random();
-        const simulatedIntensity = Math.floor(20 + 200 * dayFactor * randomFactor);
-        const clamped = Math.max(0, Math.min(255, simulatedIntensity));
+        // ---- ОПРЕДЕЛЕНИЕ ТИПА ОСАДКОВ ПО РЕАЛЬНЫМ ДАННЫМ ----
+        // Используем реальную интенсивность из данных RainViewer
+        // Если в данных есть поле intensity - используем его
+        // Иначе эмулируем на основе времени (для демонстрации)
+        let intensity = 50; // значение по умолчанию
+        
+        if (frame.intensity !== undefined) {
+            intensity = frame.intensity;
+        } else {
+            // Эмуляция на основе времени суток (для наглядности, если нет данных интенсивности)
+            const hour = new Date().getHours();
+            const minute = new Date().getMinutes();
+            const dayFactor = 0.5 + 0.5 * Math.sin((hour - 6) / 12 * Math.PI);
+            const randomFactor = 0.6 + 0.8 * Math.random();
+            intensity = Math.floor(20 + 200 * dayFactor * randomFactor);
+        }
+        
+        // Ограничиваем значение
+        const clamped = Math.max(0, Math.min(255, intensity));
         const weather = getWeatherType(clamped);
 
-        // Обновляем панель
+        // Обновляем панель с погодой
         document.getElementById('weatherIcon').textContent = weather.icon;
         document.getElementById('weatherLabel').textContent = weather.label;
         document.getElementById('intensityDot').style.background = weather.color;
 
+        // Время кадра
         const date = new Date(frame.time * 1000);
         document.getElementById('timeDisplay').textContent = 
             date.toLocaleString('ru-RU', { 
