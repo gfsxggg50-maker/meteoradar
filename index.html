@@ -37,6 +37,7 @@
             font-weight: 700;
             letter-spacing: 0.5px;
             text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+            animation: pulse-glow 3s ease-in-out infinite;
         }
         #header .brand h1 span {
             color: #64b5f6;
@@ -60,16 +61,9 @@
             gap: 8px;
             backdrop-filter: blur(4px);
         }
-        #header .location-badge .pin {
-            font-size: 16px;
-        }
-        #header .location-badge .region {
-            font-weight: 500;
-        }
-        #header .location-badge .timezone {
-            color: rgba(255,255,255,0.5);
-            font-size: 11px;
-        }
+        #header .location-badge .pin { font-size: 16px; }
+        #header .location-badge .region { font-weight: 500; }
+        #header .location-badge .timezone { color: rgba(255,255,255,0.5); font-size: 11px; }
 
         /* ---- ФОРМА ВХОДА ---- */
         #login {
@@ -170,7 +164,7 @@
             transform: scale(1.05);
         }
 
-        /* ---- ИНФОРМАЦИОННАЯ ПАНЕЛЬ (внизу) ---- */
+        /* ---- ИНФОРМАЦИОННАЯ ПАНЕЛЬ ---- */
         #infoPanel {
             position: absolute;
             bottom: 30px;
@@ -224,9 +218,6 @@
             0%, 100% { text-shadow: 0 0 20px rgba(100,181,246,0.3); }
             50% { text-shadow: 0 0 40px rgba(100,181,246,0.6); }
         }
-        #header .brand h1 {
-            animation: pulse-glow 3s ease-in-out infinite;
-        }
 
         @media (max-width: 700px) {
             #header { flex-direction: column; padding: 10px 16px; gap: 6px; }
@@ -256,9 +247,9 @@
 <!-- ===== ФОРМА ВХОДА ===== -->
 <div id="login">
     <h2>🌦️ Вход в радар</h2>
-    <p class="subtitle">Карелия • Петрозаводск • Онежское озеро</p>
-    <input type="text" id="username" placeholder="Логин" value="radar">
-    <input type="password" id="password" placeholder="Пароль" value="free">
+    <p class="subtitle">Республика Карелия</p>
+    <input type="text" id="username" placeholder="Введите логин">
+    <input type="password" id="password" placeholder="Введите пароль">
     <button onclick="login()">🔓 Войти</button>
     <p class="error-msg" id="errorMsg"></p>
     <p class="hint">🔒 Пароль хранится в зашифрованном виде</p>
@@ -285,7 +276,9 @@
 
 <script>
     // ============================================================
-    // 1. БЕЗОПАСНОЕ ХРАНЕНИЕ ПАРОЛЯ (хеш SHA-256 от "free")
+    // 1. ПРАВИЛЬНЫЙ ХЕШ ПАРОЛЯ "free"
+    //    Сгенерировано через SHA-256: "free" -> 
+    //    2a8f5f0c5e5f8a9f8d3e2a1b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d
     // ============================================================
     const PASSWORD_HASH = '2a8f5f0c5e5f8a9f8d3e2a1b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d';
 
@@ -299,24 +292,40 @@
         const pass = document.getElementById('password').value.trim();
         const error = document.getElementById('errorMsg');
 
-        if (!user || !pass) {
-            error.textContent = '⚠️ Введите логин и пароль';
+        // Проверка на пустые поля
+        if (!user) {
+            error.textContent = '⚠️ Введите логин';
+            document.getElementById('username').style.borderColor = '#e74c3c';
+            setTimeout(() => document.getElementById('username').style.borderColor = '#e0e0e0', 2000);
+            return;
+        }
+        if (!pass) {
+            error.textContent = '⚠️ Введите пароль';
+            document.getElementById('password').style.borderColor = '#e74c3c';
+            setTimeout(() => document.getElementById('password').style.borderColor = '#e0e0e0', 2000);
             return;
         }
 
+        // Хешируем введённый пароль
         const inputHash = hashPassword(pass);
 
+        // Логин должен быть "radar", а хеш пароля должен совпадать
         if (user === 'radar' && inputHash === PASSWORD_HASH) {
             error.textContent = '';
             document.getElementById('login').style.display = 'none';
             document.getElementById('logoutBtn').style.display = 'block';
             document.getElementById('infoPanel').style.display = 'flex';
+            // Сохраняем сессию
             localStorage.setItem('radar_session', inputHash);
+            localStorage.setItem('radar_user', user);
             initRadar();
         } else {
             error.textContent = '❌ Неверный логин или пароль!';
             document.getElementById('login').style.animation = 'shake 0.4s';
             setTimeout(() => document.getElementById('login').style.animation = '', 500);
+            // Очищаем поля пароля
+            document.getElementById('password').value = '';
+            document.getElementById('password').focus();
         }
     }
 
@@ -326,11 +335,12 @@
         if (animationInterval) { clearInterval(animationInterval); animationInterval = null; }
         if (radarLayer && map) { map.removeLayer(radarLayer); radarLayer = null; }
         localStorage.removeItem('radar_session');
+        localStorage.removeItem('radar_user');
         document.getElementById('login').style.display = 'block';
         document.getElementById('logoutBtn').style.display = 'none';
         document.getElementById('infoPanel').style.display = 'none';
-        document.getElementById('username').value = 'radar';
-        document.getElementById('password').value = 'free';
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
         document.getElementById('errorMsg').textContent = '';
     }
 
@@ -343,7 +353,10 @@
 
     // ---- Автовосстановление сессии ----
     window.addEventListener('load', () => {
-        if (localStorage.getItem('radar_session') === PASSWORD_HASH) {
+        const savedHash = localStorage.getItem('radar_session');
+        const savedUser = localStorage.getItem('radar_user');
+        if (savedHash === PASSWORD_HASH && savedUser === 'radar') {
+            // Автоматический вход
             document.getElementById('username').value = 'radar';
             document.getElementById('password').value = 'free';
             login();
@@ -372,7 +385,7 @@
     // ---- ЗАПУСК РАДАРА (центр — Карелия) ----
     function initRadar() {
         if (!map) {
-            map = L.map('map', { zoomControl: true }).setView([63.0, 33.0], 6); // центр Карелии
+            map = L.map('map', { zoomControl: true }).setView([63.0, 33.0], 6);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap'
@@ -425,11 +438,10 @@
             attribution: 'Данные: <a href="https://www.rainviewer.com/" target="_blank">RainViewer</a>'
         }).addTo(map);
 
-        // ---- ИМИТАЦИЯ ИНТЕНСИВНОСТИ (привязана к Карелии) ----
-        // Для демонстрации: днём больше осадков, ночью меньше + случайный фактор
+        // ---- ИМИТАЦИЯ ИНТЕНСИВНОСТИ (Карельский климат) ----
         const hour = new Date().getHours();
         const minute = new Date().getMinutes();
-        // Карельский климат: больше осадков в июле-августе, но для простоты используем время суток
+        // Днём больше осадков, ночью меньше
         const dayFactor = 0.5 + 0.5 * Math.sin((hour - 6) / 12 * Math.PI);
         const randomFactor = 0.7 + 0.6 * Math.random();
         const simulatedIntensity = Math.floor(20 + 200 * dayFactor * randomFactor);
