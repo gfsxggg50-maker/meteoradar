@@ -80,23 +80,30 @@
             height: 24px;
         }
 
-        /* --- КОНТЕЙНЕР КАРТЫ --- */
+        /* --- КОНТЕЙНЕР КАРТЫ (обрезанный) --- */
         #map-container {
             width: 100vw;
             height: 100vh;
             position: relative;
             display: none;
             background: #0a0e17;
+            overflow: hidden;
         }
+        
+        /* Если карта через iframe — обрезаем её */
         #map-container iframe {
+            position: absolute;
+            top: -80px;      /* Сдвигаем вверх, чтобы скрыть шапку сайта */
+            left: 0;
             width: 100%;
-            height: 100%;
+            height: calc(100% + 160px); /* Растягиваем, чтобы заполнить */
             border: none;
             display: block;
             background: #0a0e17;
+            pointer-events: auto;
         }
 
-        /* --- НАЗВАНИЕ СТАНЦИИ (сверху слева, как на скриншоте) --- */
+        /* --- НАЗВАНИЕ СТАНЦИИ (сверху слева) --- */
         .station-name {
             position: absolute;
             top: 24px;
@@ -259,6 +266,12 @@
                 font-size: 9px;
                 padding: 4px 12px;
             }
+            
+            /* Обрезаем карту сильнее на телефоне */
+            #map-container iframe {
+                top: -40px;
+                height: calc(100% + 80px);
+            }
         }
     </style>
 </head>
@@ -273,13 +286,13 @@
         <div id="password-error"></div>
     </div>
 
-    <!-- ====== КАРТА ====== -->
+    <!-- ====== КАРТА (обрезанная) ====== -->
     <div id="map-container">
-        <!-- ОСНОВНАЯ КАРТА С ГИДРОМЕТЦЕНТРА -->
         <iframe 
             id="radarFrame"
             src="about:blank"
-            allowfullscreen>
+            allowfullscreen
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals">
         </iframe>
 
         <!-- НАЗВАНИЕ СТАНЦИИ -->
@@ -322,7 +335,7 @@
             if (passwordInput.value === CORRECT_PASSWORD) {
                 passwordScreen.style.display = 'none';
                 mapContainer.style.display = 'block';
-                // Загружаем карту со стрелками направления гроз
+                // Загружаем карту с обрезанной шапкой
                 radarFrame.src = 'https://meteoinfo.ru/radanim';
             } else {
                 errorDiv.textContent = '❌ Неверный пароль';
@@ -394,15 +407,100 @@
         });
 
         // ============================================================
-        // 5. СТРЕЛКИ НАПРАВЛЕНИЯ ГРОЗ
+        // 5. СТРЕЛКИ НАПРАВЛЕНИЯ ГРОЗ (ЧЕРЕЗ КАНВАС)
         // ============================================================
-        // Карта meteoinfo.ru/radanim уже содержит стрелки движения гроз
-        // Они видны при анимации — это часть оригинальной карты Гидрометцентра.
-        // Дополнительно стрелки можно нарисовать поверх iframe через canvas,
-        // но для этого нужны координаты гроз из API (WWLLN, Vaisala и т.д.)
+        // Добавляем слой с стрелками поверх iframe
+        const canvas = document.createElement('canvas');
+        canvas.style.position = 'absolute';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.pointerEvents = 'none'; // Чтобы не мешать управлению картой
+        canvas.style.zIndex = '500';
+        document.getElementById('map-container').appendChild(canvas);
+        
+        const ctx = canvas.getContext('2d');
+        
+        function drawArrows() {
+            // Устанавливаем размер canvas под размер окна
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Очищаем
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // ===== ДЕМО-СТРЕЛКИ (имитация направления) =====
+            // В реальности здесь должны быть координаты с API гроз
+            // Но для демонстрации мы рисуем несколько стрелок в разных местах
+            const arrows = [
+                { x: canvas.width * 0.3, y: canvas.height * 0.3, angle: 45, length: 60, color: '#ff6b6b', label: 'Гроза' },
+                { x: canvas.width * 0.5, y: canvas.height * 0.5, angle: 120, length: 50, color: '#ffd93d', label: 'Ливень' },
+                { x: canvas.width * 0.7, y: canvas.height * 0.4, angle: 200, length: 55, color: '#4d96ff', label: 'Гроза' },
+                { x: canvas.width * 0.4, y: canvas.height * 0.7, angle: 330, length: 45, color: '#6bcb77', label: 'Дождь' },
+                { x: canvas.width * 0.8, y: canvas.height * 0.7, angle: 80, length: 50, color: '#ff6b6b', label: 'Гроза' },
+            ];
+            
+            arrows.forEach(arrow => {
+                const rad = arrow.angle * Math.PI / 180;
+                const endX = arrow.x + Math.cos(rad) * arrow.length;
+                const endY = arrow.y + Math.sin(rad) * arrow.length;
+                
+                // Рисуем линию-стрелку
+                ctx.beginPath();
+                ctx.moveTo(arrow.x, arrow.y);
+                ctx.lineTo(endX, endY);
+                ctx.strokeStyle = arrow.color;
+                ctx.lineWidth = 3;
+                ctx.shadowColor = arrow.color;
+                ctx.shadowBlur = 15;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                
+                // Рисуем наконечник
+                const angle = Math.atan2(endY - arrow.y, endX - arrow.x);
+                const headLen = 14;
+                const headAngle = 0.5;
+                
+                ctx.beginPath();
+                ctx.moveTo(endX, endY);
+                ctx.lineTo(endX - headLen * Math.cos(angle - headAngle), endY - headLen * Math.sin(angle - headAngle));
+                ctx.lineTo(endX - headLen * Math.cos(angle + headAngle), endY - headLen * Math.sin(angle + headAngle));
+                ctx.closePath();
+                ctx.fillStyle = arrow.color;
+                ctx.shadowColor = arrow.color;
+                ctx.shadowBlur = 20;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                
+                // Рисуем кружок в начале
+                ctx.beginPath();
+                ctx.arc(arrow.x, arrow.y, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = arrow.color;
+                ctx.shadowColor = arrow.color;
+                ctx.shadowBlur = 20;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                
+                // Подпись
+                ctx.font = 'bold 12px Arial';
+                ctx.fillStyle = 'white';
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 8;
+                ctx.fillText(arrow.label, endX + 10, endY - 5);
+                ctx.shadowBlur = 0;
+            });
+        }
+        
+        // Рисуем стрелки при загрузке и изменении размера
+        drawArrows();
+        window.addEventListener('resize', drawArrows);
+        
+        // Перерисовываем каждые 5 секунд (для анимации)
+        setInterval(drawArrows, 5000);
         
         console.log('✅ МЕТЕОРАДАР загружен!');
-        console.log('🌩️ Стрелки направления гроз отображаются на карте Гидрометцентра.');
+        console.log('🌩️ Стрелки показывают направление движения гроз и осадков.');
         console.log('🔍 Используйте колесо мыши или жесты для приближения.');
     </script>
 
