@@ -1,357 +1,484 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Radar Karelia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Радар и молнии Карелии</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html, #map { height: 100%; width: 100%; font-family: Arial, sans-serif; background: #1a1a2e; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-        #header {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            background: rgba(0, 0, 30, 0.92);
-            padding: 12px 24px;
+        /* === LOGIN === */
+        #login-screen {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-            backdrop-filter: blur(8px);
-            pointer-events: none;
-            border-bottom: 2px solid rgba(100, 181, 246, 0.3);
-        }
-        #header h1 { font-size: 20px; font-weight: 700; }
-        #header h1 span { color: #64b5f6; }
-        #header .sub { font-size: 11px; opacity: 0.6; margin-left: 8px; }
-        #header .location { font-size: 13px; opacity: 0.8; }
-
-        #login {
-            position: absolute;
-            z-index: 1001;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            text-align: center;
-            min-width: 300px;
-        }
-        #login h2 { margin-bottom: 5px; color: #1a1a2e; font-size: 26px; }
-        #login .subtitle { color: #888; margin-bottom: 25px; font-size: 14px; }
-        #login input {
-            display: block;
-            margin: 10px auto;
-            padding: 12px 16px;
-            width: 100%;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 16px;
-        }
-        #login input:focus { border-color: #4a90e2; outline: none; }
-        #login button {
-            padding: 12px;
-            width: 100%;
-            background: #4a90e2;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: 0.2s;
-        }
-        #login button:hover { background: #357abd; transform: scale(1.02); }
-        #login .error {
-            color: #e74c3c;
-            font-size: 14px;
-            margin-top: 10px;
-            min-height: 22px;
-            font-weight: 500;
-        }
-        #login .hint {
-            font-size: 12px;
-            color: #999;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-        #login .hint strong {
-            color: #333;
-            background: #f0f0f0;
-            padding: 2px 10px;
-            border-radius: 4px;
-        }
-
-        #logoutBtn {
-            position: absolute;
-            top: 80px;
-            right: 20px;
-            z-index: 1000;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 13px;
-            display: none;
-            transition: 0.2s;
-        }
-        #logoutBtn:hover { background: #c0392b; }
-
-        #bottomPanel {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 999;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 14px 24px;
-            display: none;
             align-items: center;
             justify-content: center;
-            gap: 16px;
-            border: 1px solid rgba(255,255,255,0.1);
-            pointer-events: auto;
+            height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+        .login-box {
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+        }
+        .login-box h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #38bdf8;
+        }
+        .login-box p {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 28px;
+        }
+        .login-box input {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 14px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-size: 15px;
+            outline: none;
+        }
+        .login-box input:focus { border-color: #38bdf8; }
+        .login-box button {
+            width: 100%;
+            padding: 13px;
+            background: #0ea5e9;
             color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .login-box button:hover { background: #0284c7; }
+        .error {
+            color: #f87171;
             font-size: 13px;
-            min-width: 250px;
-        }
-        #bottomPanel .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            background: #4CAF50;
-            animation: pulse 1.5s ease-in-out infinite;
+            margin-top: 12px;
+            display: none;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.3; transform: scale(0.8); }
+        /* === MAIN === */
+        #main-screen {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
         }
-        @keyframes shake {
-            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
-            25% { transform: translate(-50%, -50%) rotate(-4deg); }
-            75% { transform: translate(-50%, -50%) rotate(4deg); }
+        .header {
+            height: 56px;
+            background: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            border-bottom: 1px solid #334155;
+            z-index: 1000;
+            gap: 8px;
+        }
+        .header h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #38bdf8;
+            white-space: nowrap;
+        }
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: #0f172a;
+            padding: 3px;
+            border-radius: 8px;
+        }
+        .tab-btn {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .tab-btn.active {
+            background: #0ea5e9;
+            color: white;
+        }
+        .tab-btn:hover:not(.active) {
+            color: #e2e8f0;
+        }
+        #timestamp {
+            font-size: 13px;
+            color: #e2e8f0;
+            min-width: 110px;
+            text-align: center;
+        }
+        .controls {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        .controls button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #475569;
+            border-radius: 7px;
+            background: #0f172a;
+            color: #e2e8f0;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .controls button:hover {
+            background: #334155;
+            border-color: #38bdf8;
+        }
+        .logout-btn {
+            background: transparent;
+            border: 1px solid #475569;
+            color: #94a3b8;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 6px;
+        }
+        .logout-btn:hover {
+            border-color: #f87171;
+            color: #f87171;
         }
 
-        @media (max-width: 700px) {
-            #header { flex-direction: column; padding: 10px 16px; gap: 4px; }
-            #header h1 { font-size: 17px; }
-            #login { min-width: auto; width: 90%; padding: 30px; }
-            #bottomPanel { min-width: auto; width: 95%; padding: 12px 16px; font-size: 11px; flex-wrap: wrap; }
-            #logoutBtn { top: 110px; right: 10px; font-size: 11px; padding: 6px 14px; }
+        #content {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        #radar-panel, #lightning-panel {
+            position: absolute;
+            inset: 0;
+            display: none;
+        }
+        #radar-panel.active, #lightning-panel.active {
+            display: block;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        #lightning-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .attribution {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: rgba(15, 23, 42, 0.85);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #94a3b8;
+            z-index: 1000;
+        }
+        .attribution a {
+            color: #38bdf8;
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
 
-<!-- ШАПКА -->
-<div id="header">
-    <div>
-        <h1>📡 Radar <span>Karelia</span></h1>
-        <span class="sub">by Timur Konoplev</span>
-    </div>
-    <div class="location">📍 Республика Карелия</div>
-</div>
-
-<!-- ФОРМА ВХОДА -->
-<div id="login">
-    <h2>🌦️ Вход</h2>
-    <p class="subtitle">Радар осадков</p>
-    <input type="text" id="loginInput" placeholder="Логин">
-    <input type="password" id="passInput" placeholder="Пароль">
-    <button onclick="doLogin()">🔓 Войти</button>
-    <div class="error" id="errorMsg"></div>
-    <div class="hint">
-        👤 <strong>radar</strong> / <strong>123</strong> &nbsp;|&nbsp; 🔑 <strong>free</strong> / <strong>123</strong>
+<!-- Логин -->
+<div id="login-screen">
+    <div class="login-box">
+        <h1>🌧 Радар Карелии</h1>
+        <p>Осадки + грозопеленгация</p>
+        <input type="text" id="username" placeholder="Логин" autocomplete="username">
+        <input type="password" id="password" placeholder="Пароль" autocomplete="current-password">
+        <button onclick="tryLogin()">Войти</button>
+        <div class="error" id="error">Неверный логин или пароль</div>
     </div>
 </div>
 
-<!-- КНОПКА ВЫХОДА -->
-<button id="logoutBtn" onclick="doLogout()">🚪 Выйти</button>
+<!-- Основной экран -->
+<div id="main-screen">
+    <div class="header">
+        <h2>Карелия</h2>
 
-<!-- КАРТА -->
-<div id="map"></div>
+        <div class="tabs">
+            <button class="tab-btn active" id="tab-radar" onclick="switchTab('radar')">Осадки</button>
+            <button class="tab-btn" id="tab-lightning" onclick="switchTab('lightning')">Молнии</button>
+        </div>
 
-<!-- НИЖНЯЯ ПАНЕЛЬ -->
-<div id="bottomPanel">
-    <span class="dot"></span>
-    <span id="statusText">Загрузка...</span>
-    <span id="timeDisplay"></span>
+        <span id="timestamp">—</span>
+
+        <div class="controls" id="radar-controls">
+            <button onclick="stop(); showFrame(animationPosition - 1)">‹</button>
+            <button id="playBtn" onclick="playStop()">▶</button>
+            <button onclick="stop(); showFrame(animationPosition + 1)">›</button>
+        </div>
+
+        <button class="logout-btn" onclick="logout()">Выйти</button>
+    </div>
+
+    <div id="content">
+        <!-- Радар -->
+        <div id="radar-panel" class="active">
+            <div id="map"></div>
+            <div class="attribution">
+                Данные: <a href="https://www.rainviewer.com/" target="_blank">RainViewer</a>
+            </div>
+        </div>
+
+        <!-- Молнии (Blitzortung) -->
+        <div id="lightning-panel">
+            <iframe id="lightning-iframe"
+                src="https://map.blitzortung.org/index.php?interactive=1&NavigationControl=1&FullScreenControl=1&Cookies=0&InfoDiv=0&MenuButtonDiv=1&ScaleControl=1&Advertisment=0&MapStyle=0#7/61.78/34.35"
+                allowfullscreen>
+            </iframe>
+            <div class="attribution" style="bottom: 40px;">
+                Молнии: <a href="https://www.blitzortung.org/" target="_blank">Blitzortung.org</a> / LightningMaps.org
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-    // ========================================
-    // 1. АВТОРИЗАЦИЯ
-    // ========================================
-    
-    const USERS = [
-        { login: 'radar', password: 'free' },
-        { login: '123', password: '123' }
-    ];
+    // ===================== НАСТРОЙКИ =====================
+    const LOGIN = "admin";
+    const PASSWORD = "karelia";
 
-    function doLogin() {
-        const user = document.getElementById('loginInput').value.trim();
-        const pass = document.getElementById('passInput').value.trim();
-        const error = document.getElementById('errorMsg');
+    const KARELIA_CENTER = [61.78, 34.35]; // Петрозаводск
+    const KARELIA_ZOOM = 7;
 
-        if (!user) { error.textContent = '⚠️ Введите логин'; return; }
-        if (!pass) { error.textContent = '⚠️ Введите пароль'; return; }
+    const TILE_SIZE = window.devicePixelRatio >= 2 ? 512 : 256;
+    const RADAR_OPACITY = 0.75;
+    const ANIMATION_DELAY_MS = 600;
+    const API_URL = "https://api.rainviewer.com/public/weather-maps.json";
 
-        const found = USERS.find(u => u.login === user && u.password === pass);
-
-        if (found) {
-            error.textContent = '';
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('logoutBtn').style.display = 'block';
-            document.getElementById('bottomPanel').style.display = 'flex';
-            localStorage.setItem('radar_auth', 'ok');
-            initRadar();
-        } else {
-            error.textContent = '❌ Неверный логин или пароль!';
-            document.getElementById('login').style.animation = 'shake 0.4s';
-            setTimeout(() => document.getElementById('login').style.animation = '', 500);
-            document.getElementById('passInput').value = '';
-            document.getElementById('passInput').focus();
-        }
-    }
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && document.getElementById('login').style.display !== 'none') {
-            doLogin();
-        }
-    });
-
-    function doLogout() {
-        loggedIn = false;
-        if (radarLayer && map) { map.removeLayer(radarLayer); radarLayer = null; }
-        localStorage.removeItem('radar_auth');
-        document.getElementById('login').style.display = 'block';
-        document.getElementById('logoutBtn').style.display = 'none';
-        document.getElementById('bottomPanel').style.display = 'none';
-        document.getElementById('loginInput').value = '';
-        document.getElementById('passInput').value = '';
-        document.getElementById('errorMsg').textContent = '';
-    }
-
-    window.addEventListener('load', function() {
-        if (localStorage.getItem('radar_auth') === 'ok') {
-            doLogin();
-        }
-    });
-
-    // ========================================
-    // 2. РАДАР - ПРОСТОЙ И РАБОЧИЙ
-    // ========================================
-    
+    // ===================== СОСТОЯНИЕ =====================
+    let apiData = {};
+    let mapFrames = [];
+    let animationPosition = 0;
+    let animationTimer = false;
+    let currentLayer = null;
+    let isLoading = false;
+    let layerCache = {};
     let map = null;
-    let radarLayer = null;
-    let loggedIn = false;
+    let currentTab = 'radar';
 
-    function initRadar() {
-        if (!map) {
-            map = L.map('map', {
-                center: [63.0, 33.0],
-                zoom: 6,
-                zoomControl: true
-            });
-            
-            // Тёмная карта
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution: '© OpenStreetMap, © CartoDB',
-                maxZoom: 19
-            }).addTo(map);
+    // ===================== ЛОГИН =====================
+    function tryLogin() {
+        const user = document.getElementById('username').value.trim();
+        const pass = document.getElementById('password').value;
+
+        if (user === LOGIN && pass === PASSWORD) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-screen').style.display = 'flex';
+            initMap();
+        } else {
+            const error = document.getElementById('error');
+            error.style.display = 'block';
+            setTimeout(() => error.style.display = 'none', 2500);
         }
-        loggedIn = true;
-        document.getElementById('statusText').textContent = 'Загрузка радара...';
-        loadRadar();
     }
 
-    function loadRadar() {
-        // === РАБОЧИЙ ВАРИАНТ 1: OpenWeatherMap ===
-        // Используем официальные тайлы OpenWeatherMap с готовым API ключом
-        
-        const now = Math.floor(Date.now() / 1000);
-        // Берём кадры за последние 2 часа с интервалом 15 минут
-        const times = [];
-        for (let i = 0; i < 9; i++) {
-            times.push(now - i * 15 * 60);
+    document.getElementById('password').addEventListener('keypress', e => {
+        if (e.key === 'Enter') tryLogin();
+    });
+    document.getElementById('username').addEventListener('keypress', e => {
+        if (e.key === 'Enter') tryLogin();
+    });
+
+    function logout() {
+        stop();
+        document.getElementById('main-screen').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        if (map) {
+            map.remove();
+            map = null;
         }
-        
-        let frameIndex = 0;
-        
-        function showFrame() {
-            if (!loggedIn) return;
-            const time = times[frameIndex];
-            
-            // OpenWeatherMap Precipitation Map
-            // Используем публичный ключ для демонстрации
-            const tileUrl = `https://tile.openweathermap.org/map/precipitation_new/${time}/{z}/{x}/{y}.png?appid=439d4b804bc8187953eb36d2a8c26a02`;
-            
-            if (radarLayer) {
-                map.removeLayer(radarLayer);
+        layerCache = {};
+        currentLayer = null;
+    }
+
+    // ===================== ВКЛАДКИ =====================
+    function switchTab(tab) {
+        currentTab = tab;
+
+        document.getElementById('tab-radar').classList.toggle('active', tab === 'radar');
+        document.getElementById('tab-lightning').classList.toggle('active', tab === 'lightning');
+
+        document.getElementById('radar-panel').classList.toggle('active', tab === 'radar');
+        document.getElementById('lightning-panel').classList.toggle('active', tab === 'lightning');
+
+        document.getElementById('radar-controls').style.display = tab === 'radar' ? 'flex' : 'none';
+        document.getElementById('timestamp').style.display = tab === 'radar' ? 'block' : 'none';
+
+        if (tab === 'radar' && map) {
+            setTimeout(() => map.invalidateSize(), 50);
+        }
+    }
+
+    // ===================== КАРТА РАДАРА =====================
+    function initMap() {
+        map = L.map('map', {
+            maxZoom: 12,
+            minZoom: 5
+        }).setView(KARELIA_CENTER, KARELIA_ZOOM);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        L.marker(KARELIA_CENTER)
+            .addTo(map)
+            .bindPopup('<b>Петрозаводск</b><br>Республика Карелия');
+
+        map.on('movestart', clearLayerCache);
+        loadApiData();
+    }
+
+    // ===================== РАДАР =====================
+    function wrapPosition(position) {
+        while (position >= mapFrames.length) position -= mapFrames.length;
+        while (position < 0) position += mapFrames.length;
+        return position;
+    }
+
+    function formatTime(timestamp) {
+        return new Date(timestamp * 1000).toLocaleString('ru-RU', {
+            day: '2-digit', month: '2-digit',
+            hour: '2-digit', minute: '2-digit'
+        });
+    }
+
+    function createRadarLayer(frame) {
+        return new L.TileLayer(
+            apiData.host + frame.path + '/' + TILE_SIZE + '/{z}/{x}/{y}/2/1_1.png',
+            {
+                tileSize: 256,
+                opacity: 0.001,
+                maxNativeZoom: 7,
+                maxZoom: 12
             }
-            
-            radarLayer = L.tileLayer(tileUrl, {
-                maxZoom: 10,
-                minZoom: 4,
-                opacity: 0.7,
-                attribution: 'Данные: OpenWeatherMap',
-                tms: false,
-                crossOrigin: true,
-                // Добавляем обработку ошибок
-                errorTileUrl: ''
-            }).addTo(map);
-            
-            // Обновляем информацию
-            const d = new Date(time * 1000);
-            const timeStr = d.toLocaleString('ru-RU', { 
-                day: '2-digit', 
-                month: '2-digit', 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-            
-            const nowTime = Date.now() / 1000;
-            const diff = Math.round((nowTime - time) / 60);
-            
-            if (diff < 5) {
-                document.getElementById('statusText').textContent = '🟢 Сейчас';
-            } else if (diff < 60) {
-                document.getElementById('statusText').textContent = `🟡 ${diff} мин назад`;
+        );
+    }
+
+    function clearLayerCache() {
+        stop();
+        for (let pos in layerCache) {
+            if (parseInt(pos) !== animationPosition) {
+                map.removeLayer(layerCache[pos]);
+                delete layerCache[pos];
+            }
+        }
+    }
+
+    function stop() {
+        if (animationTimer) {
+            clearTimeout(animationTimer);
+            animationTimer = false;
+            document.getElementById("playBtn").innerHTML = "▶";
+            return true;
+        }
+        return false;
+    }
+
+    function play() {
+        animationTimer = true;
+        document.getElementById("playBtn").innerHTML = "⏸";
+        showFrame(animationPosition + 1);
+    }
+
+    function playStop() {
+        if (!stop()) play();
+    }
+
+    function updateTimestamp(frame) {
+        document.getElementById("timestamp").innerHTML = formatTime(frame.time);
+    }
+
+    function showFrame(position) {
+        if (isLoading || !mapFrames.length) return;
+
+        position = wrapPosition(position);
+        const frame = mapFrames[position];
+        updateTimestamp(frame);
+
+        const oldLayer = currentLayer;
+
+        if (layerCache[position]) {
+            if (oldLayer) oldLayer.setOpacity(0);
+            layerCache[position].setOpacity(RADAR_OPACITY);
+            currentLayer = layerCache[position];
+            animationPosition = position;
+            if (animationTimer) animationTimer = setTimeout(play, ANIMATION_DELAY_MS);
+            return;
+        }
+
+        isLoading = true;
+        const newLayer = createRadarLayer(frame);
+
+        newLayer.on('load', function () {
+            newLayer.setOpacity(RADAR_OPACITY);
+            if (oldLayer) oldLayer.setOpacity(0);
+            layerCache[position] = newLayer;
+            currentLayer = newLayer;
+            animationPosition = position;
+            isLoading = false;
+            if (animationTimer) animationTimer = setTimeout(play, ANIMATION_DELAY_MS);
+        });
+
+        newLayer.addTo(map);
+    }
+
+    function initialize(api) {
+        clearLayerCache();
+        currentLayer = null;
+        mapFrames = [];
+        animationPosition = 0;
+
+        if (!api || !api.radar || !api.radar.past) {
+            document.getElementById("timestamp").innerHTML = "Нет данных";
+            return;
+        }
+
+        mapFrames = api.radar.past;
+        showFrame(mapFrames.length - 1);
+    }
+
+    function loadApiData() {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", API_URL, true);
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                apiData = JSON.parse(xhr.response);
+                initialize(apiData);
             } else {
-                document.getElementById('statusText').textContent = `🟠 ${Math.floor(diff/60)} ч ${diff%60} мин назад`;
+                document.getElementById("timestamp").innerHTML = "Ошибка";
             }
-            document.getElementById('timeDisplay').textContent = timeStr;
-        }
-        
-        // Показываем первый кадр (самый свежий)
-        frameIndex = 0;
-        showFrame();
-        
-        // Анимация - переключаем кадры
-        setInterval(() => {
-            if (!loggedIn) return;
-            frameIndex = (frameIndex + 1) % times.length;
-            showFrame();
-        }, 2000);
-        
-        // Обновляем статус
-        document.getElementById('statusText').textContent = '🟢 Радар работает';
+        };
+        xhr.onerror = () => document.getElementById("timestamp").innerHTML = "Нет связи";
+        xhr.send();
     }
 </script>
-
 </body>
 </html>
