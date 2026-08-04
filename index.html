@@ -7,7 +7,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html, #map { height: 100%; width: 100%; font-family: Arial, sans-serif; background: #1a1a2e; }
+        body, html, #map { height: 100%; width: 100%; font-family: Arial, sans-serif; }
 
         #header {
             position: absolute;
@@ -351,7 +351,7 @@
     });
 
     // ========================================
-    // 2. РАДАР НА OPENWEATHERMAP
+    // 2. РАДАР - MET NORWAY
     // ========================================
     
     let map = null;
@@ -366,11 +366,11 @@
         if (!map) {
             map = L.map('map', {
                 center: [63.0, 33.0],
-                zoom: 5,
+                zoom: 6,
                 zoomControl: true
             });
             
-            // Тёмная карта для лучшей видимости осадков
+            // Тёмная карта для лучшей видимости
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                 attribution: '© OpenStreetMap, © CartoDB',
                 maxZoom: 19
@@ -382,63 +382,131 @@
     }
 
     function loadRadarData() {
-        // Используем OpenWeatherMap Precipitation Map
-        // Формируем тайлы для 5 разных моментов времени (сейчас и 4 прошлых)
-        const now = Math.floor(Date.now() / 1000);
-        const times = [];
-        
-        // Создаём 5 кадров с интервалом 15 минут
-        for (let i = 0; i < 5; i++) {
-            times.push(now - (i * 15 * 60));
-        }
-        
-        frames = times.map(t => ({ time: t }));
-        currentIndex = 0;
-        
-        const slider = document.getElementById('timelineSlider');
-        slider.max = frames.length - 1;
-        slider.value = 0;
-        
-        showFrame(currentIndex);
-        updateTimelineInfo();
-        
-        // Запускаем анимацию
-        if (animTimer) clearInterval(animTimer);
-        animTimer = setInterval(() => {
-            if (!loggedIn) { clearInterval(animTimer); return; }
-            if (isPlaying) {
-                currentIndex = (currentIndex + 1) % frames.length;
+        // Используем MET Norway Radar API
+        // Получаем список доступных кадров за последние 3 часа
+        fetch('https://api.met.no/weatherapi/radar/2.0/available.json')
+            .then(response => {
+                if (!response.ok) throw new Error('Ошибка MET API');
+                return response.json();
+            })
+            .then(data => {
+                if (!data || !data.files || data.files.length === 0) {
+                    throw new Error('Нет данных');
+                }
+                
+                // Берём последние 10 кадров (примерно за последние 2-3 часа)
+                const radarFiles = data.files
+                    .filter(f => f.type === 'PNG')
+                    .filter(f => f.product === 'compressed' || f.product === 'polar')
+                    .slice(-10);
+                
+                if (radarFiles.length === 0) {
+                    throw new Error('Нет PNG файлов');
+                }
+                
+                frames = radarFiles.map(f => ({
+                    time: f.time,
+                    path: f.path,
+                    area: f.area
+                }));
+                
+                currentIndex = frames.length - 1;
+                
+                const slider = document.getElementById('timelineSlider');
+                slider.max = frames.length - 1;
+                slider.value = currentIndex;
+                
                 showFrame(currentIndex);
-                document.getElementById('timelineSlider').value = currentIndex;
                 updateTimelineInfo();
-            }
-        }, 1000);
+                
+                // Запускаем анимацию
+                if (animTimer) clearInterval(animTimer);
+                animTimer = setInterval(() => {
+                    if (!loggedIn) { clearInterval(animTimer); return; }
+                    if (isPlaying) {
+                        if (currentIndex < frames.length - 1) {
+                            currentIndex++;
+                        } else {
+                            // Если дошли до конца - перематываем к последнему
+                            // Можно оставить на последнем
+                        }
+                        showFrame(currentIndex);
+                        document.getElementById('timelineSlider').value = currentIndex;
+                        updateTimelineInfo();
+                    }
+                }, 1500);
+            })
+            .catch(err => {
+                console.error('MET Radar ошибка:', err);
+                document.getElementById('statusText').textContent = '❌ Ошибка MET API';
+                // Пробуем другой источник
+                loadRadarDataBackup();
+            });
     }
 
+    // Резервный вариант - если MET не работает
+    function loadRadarDataBackup() {
+        document.getElementById('statusText').textContent = '⏳ Резервный источник...';
+        
+        // Используем RainViewer через прокси с правильным форматом
+        fetch('https://api.rainviewer.com/public/weather-maps.json')
+            .then(r => r.json())
+            .then(data => {
+                if (!data || !data.radar || !data.radar.past) {
+                    throw new Error('Нет данных');
+                }
+                
+                // Берём последние 8 кадров
+                const allFrames = data.radar.past;
+                frames = allFrames.slice(-8);
+                currentIndex = frames.length - 1;
+                
+                const slider = document.getElementById('timelineSlider');
+                slider.max = frames.length - 1;
+                slider.value = currentIndex;
+                
+                showFrameBackup(currentIndex);
+                updateTimelineInfo();
+                
+                if (animTimer) clearInterval(animTimer);
+                animTimer = setInterval(() => {
+                    if (!loggedIn) { clearInterval(animTimer); return; }
+                    if (isPlaying) {
+                        currentIndex = (currentIndex + 1) % frames.length;
+                        showFrameBackup(currentIndex);
+                        document.getElementById('timelineSlider').value = currentIndex;
+                        updateTimelineInfo();
+                    }
+                }, 800);
+            })
+            .catch(err => {
+                console.error('Ошибка:', err);
+                document.getElementById('statusText').textContent = '❌ Ошибка загрузки';
+                document.getElementById('currentTimeDisplay').textContent = '❌ Нет данных';
+            });
+    }
+
+    // === MET Norway Frame ===
     function showFrame(index) {
         if (!loggedIn || !frames.length) return;
         const frame = frames[index];
         if (!frame) return;
 
-        // Используем OpenWeatherMap Precipitation Map
-        // Это официальный тайловый сервер OpenWeatherMap
-        const timestamp = frame.time;
-        const tileUrl = `https://tile.openweathermap.org/map/precipitation_new/${timestamp}/{z}/{x}/{y}.png?appid=439d4b804bc8187953eb36d2a8c26a02`;
-        
-        // Резервный вариант: если OpenWeatherMap не работает, используем RainViewer
-        // Но с правильным форматом для zoom 5-6
-        
+        // MET Norway Radar URL
+        // Используем их CDN с правильными параметрами
+        const baseUrl = 'https://api.met.no/weatherapi/radar/2.0';
+        const tileUrl = `${baseUrl}/tile/${frame.area}/${frame.time}/512/{z}/{x}/{y}.png`;
+
         if (radarLayer) {
             map.removeLayer(radarLayer);
         }
 
         radarLayer = L.tileLayer(tileUrl, {
             maxZoom: 10,
-            minZoom: 3,
-            opacity: 0.7,
-            attribution: 'Данные: <a href="https://openweathermap.org/" target="_blank">OpenWeatherMap</a>',
-            tms: false,
-            crossOrigin: true
+            minZoom: 4,
+            opacity: 0.8,
+            attribution: 'Данные: MET Norway',
+            tms: false
         }).addTo(map);
 
         // Обновляем информацию
@@ -451,12 +519,56 @@
         });
         
         document.getElementById('currentTimeDisplay').textContent = timeStr;
-        document.getElementById('statusText').textContent = index === 0 ? '🟢 Сейчас' : '🟡 ' + (index * 15) + ' мин назад';
-        document.getElementById('statusDot').className = index === 0 ? 'dot' : 'dot paused';
+        
+        const now = Date.now() / 1000;
+        const diffMinutes = Math.round((now - frame.time) / 60);
+        if (diffMinutes < 5) {
+            document.getElementById('statusText').textContent = '🟢 Сейчас';
+            document.getElementById('statusDot').className = 'dot';
+        } else {
+            document.getElementById('statusText').textContent = `🟡 ${diffMinutes} мин назад`;
+            document.getElementById('statusDot').className = 'dot paused';
+        }
+        document.getElementById('frameInfo').textContent = `${index + 1}/${frames.length}`;
+    }
+
+    // === RainViewer Frame (резерв) ===
+    function showFrameBackup(index) {
+        if (!loggedIn || !frames.length) return;
+        const frame = frames[index];
+        if (!frame) return;
+
+        // Правильный URL для RainViewer на zoom 5-6
+        const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`;
+
+        if (radarLayer) {
+            map.removeLayer(radarLayer);
+        }
+
+        radarLayer = L.tileLayer(tileUrl, {
+            maxZoom: 7,
+            minZoom: 3,
+            opacity: 0.8,
+            attribution: 'Данные: RainViewer',
+            tms: false
+        }).addTo(map);
+
+        const d = new Date(frame.time * 1000);
+        const timeStr = d.toLocaleString('ru-RU', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        
+        document.getElementById('currentTimeDisplay').textContent = timeStr;
+        document.getElementById('statusText').textContent = index === frames.length - 1 ? '🟢 Сейчас' : '🟡 Прошлое';
+        document.getElementById('statusDot').className = index === frames.length - 1 ? 'dot' : 'dot paused';
         document.getElementById('frameInfo').textContent = `${index + 1}/${frames.length}`;
     }
 
     function updateTimelineInfo() {
+        if (!frames.length) return;
         const frame = frames[currentIndex];
         if (!frame) return;
         
@@ -477,7 +589,11 @@
         const val = parseInt(slider.value);
         if (val >= 0 && val < frames.length) {
             currentIndex = val;
-            showFrame(currentIndex);
+            if (frames[currentIndex].area) {
+                showFrame(currentIndex);
+            } else {
+                showFrameBackup(currentIndex);
+            }
             isPlaying = false;
             document.getElementById('statusText').textContent = '⏸️ Пауза';
             document.getElementById('statusDot').className = 'dot paused';
@@ -488,7 +604,11 @@
         if (currentIndex > 0) {
             currentIndex--;
             document.getElementById('timelineSlider').value = currentIndex;
-            showFrame(currentIndex);
+            if (frames[currentIndex].area) {
+                showFrame(currentIndex);
+            } else {
+                showFrameBackup(currentIndex);
+            }
             isPlaying = false;
             document.getElementById('statusText').textContent = '⏸️ Пауза';
             document.getElementById('statusDot').className = 'dot paused';
@@ -499,7 +619,11 @@
         if (currentIndex < frames.length - 1) {
             currentIndex++;
             document.getElementById('timelineSlider').value = currentIndex;
-            showFrame(currentIndex);
+            if (frames[currentIndex].area) {
+                showFrame(currentIndex);
+            } else {
+                showFrameBackup(currentIndex);
+            }
             isPlaying = false;
             document.getElementById('statusText').textContent = '⏸️ Пауза';
             document.getElementById('statusDot').className = 'dot paused';
